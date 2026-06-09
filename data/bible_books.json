@@ -1,0 +1,398 @@
+[
+{
+"abbr": "創",
+"full": "創世記",
+"id": 1,
+"chapters": 50
+},
+{
+"abbr": "出",
+"full": "出埃及記",
+"id": 2,
+"chapters": 40
+},
+{
+"abbr": "利",
+"full": "利未記",
+"id": 3,
+"chapters": 27
+},
+{
+"abbr": "民",
+"full": "民數記",
+"id": 4,
+"chapters": 36
+},
+{
+"abbr": "申",
+"full": "申命記",
+"id": 5,
+"chapters": 34
+},
+{
+"abbr": "書",
+"full": "約書亞記",
+"id": 6,
+"chapters": 24
+},
+{
+"abbr": "士",
+"full": "士師記",
+"id": 7,
+"chapters": 21
+},
+{
+"abbr": "得",
+"full": "路得記",
+"id": 8,
+"chapters": 4
+},
+{
+"abbr": "撒上",
+"full": "撒母耳記上",
+"id": 9,
+"chapters": 31
+},
+{
+"abbr": "撒下",
+"full": "撒母耳記下",
+"id": 10,
+"chapters": 24
+},
+{
+"abbr": "王上",
+"full": "列王紀上",
+"id": 11,
+"chapters": 22
+},
+{
+"abbr": "王下",
+"full": "列王紀下",
+"id": 12,
+"chapters": 25
+},
+{
+"abbr": "代上",
+"full": "歷代志上",
+"id": 13,
+"chapters": 29
+},
+{
+"abbr": "代下",
+"full": "歷代志下",
+"id": 14,
+"chapters": 36
+},
+{
+"abbr": "拉",
+"full": "以斯拉記",
+"id": 15,
+"chapters": 10
+},
+{
+"abbr": "尼",
+"full": "尼希米記",
+"id": 16,
+"chapters": 13
+},
+{
+"abbr": "斯",
+"full": "以斯帖記",
+"id": 17,
+"chapters": 10
+},
+{
+"abbr": "伯",
+"full": "約伯記",
+"id": 18,
+"chapters": 42
+},
+{
+"abbr": "詩",
+"full": "詩篇",
+"id": 19,
+"chapters": 150
+},
+{
+"abbr": "箴",
+"full": "箴言",
+"id": 20,
+"chapters": 31
+},
+{
+"abbr": "傳",
+"full": "傳道書",
+"id": 21,
+"chapters": 12
+},
+{
+"abbr": "歌",
+"full": "雅歌",
+"id": 22,
+"chapters": 8
+},
+{
+"abbr": "賽",
+"full": "以賽亞書",
+"id": 23,
+"chapters": 66
+},
+{
+"abbr": "耶",
+"full": "耶利米書",
+"id": 24,
+"chapters": 52
+},
+{
+"abbr": "哀",
+"full": "耶利米哀歌",
+"id": 25,
+"chapters": 5
+},
+{
+"abbr": "結",
+"full": "以西結書",
+"id": 26,
+"chapters": 48
+},
+{
+"abbr": "但",
+"full": "但以理書",
+"id": 27,
+"chapters": 12
+},
+{
+"abbr": "何",
+"full": "何西阿書",
+"id": 28,
+"chapters": 14
+},
+{
+"abbr": "珥",
+"full": "約珥書",
+"id": 29,
+"chapters": 3
+},
+{
+"abbr": "摩",
+"full": "阿摩司書",
+"id": 30,
+"chapters": 9
+},
+{
+"abbr": "俄",
+"full": "俄巴底亞書",
+"id": 31,
+"chapters": 1
+},
+{
+"abbr": "拿",
+"full": "約拿書",
+"id": 32,
+"chapters": 4
+},
+{
+"abbr": "彌",
+"full": "彌迦書",
+"id": 33,
+"chapters": 7
+},
+{
+"abbr": "鴻",
+"full": "那鴻書",
+"id": 34,
+"chapters": 3
+},
+{
+"abbr": "哈",
+"full": "哈巴谷書",
+"id": 35,
+"chapters": 3
+},
+{
+"abbr": "番",
+"full": "西番雅書",
+"id": 36,
+"chapters": 3
+},
+{
+"abbr": "該",
+"full": "哈該書",
+"id": 37,
+"chapters": 2
+},
+{
+"abbr": "亞",
+"full": "撒迦利亞書",
+"id": 38,
+"chapters": 14
+},
+{
+"abbr": "瑪",
+"full": "瑪拉基書",
+"id": 39,
+"chapters": 4
+},
+{
+"abbr": "太",
+"full": "馬太福音",
+"id": 40,
+"chapters": 28
+},
+{
+"abbr": "可",
+"full": "馬可福音",
+"id": 41,
+"chapters": 16
+},
+{
+"abbr": "路",
+"full": "路加福音",
+"id": 42,
+"chapters": 24
+},
+{
+"abbr": "約",
+"full": "約翰福音",
+"id": 43,
+"chapters": 21
+},
+{
+"abbr": "徒",
+"full": "使徒行傳",
+"id": 44,
+"chapters": 28
+},
+{
+"abbr": "羅",
+"full": "羅馬書",
+"id": 45,
+"chapters": 16
+},
+{
+"abbr": "林前",
+"full": "哥林多前書",
+"id": 46,
+"chapters": 16
+},
+{
+"abbr": "林後",
+"full": "哥林多後書",
+"id": 47,
+"chapters": 13
+},
+{
+"abbr": "加",
+"full": "加拉太書",
+"id": 48,
+"chapters": 6
+},
+{
+"abbr": "弗",
+"full": "以弗所書",
+"id": 49,
+"chapters": 6
+},
+{
+"abbr": "腓",
+"full": "腓立比書",
+"id": 50,
+"chapters": 4
+},
+{
+"abbr": "西",
+"full": "歌羅西書",
+"id": 51,
+"chapters": 4
+},
+{
+"abbr": "帖前",
+"full": "帖撒羅尼迦前書",
+"id": 52,
+"chapters": 5
+},
+{
+"abbr": "帖後",
+"full": "帖撒羅尼迦後書",
+"id": 53,
+"chapters": 3
+},
+{
+"abbr": "提前",
+"full": "提摩太前書",
+"id": 54,
+"chapters": 6
+},
+{
+"abbr": "提後",
+"full": "提摩太後書",
+"id": 55,
+"chapters": 4
+},
+{
+"abbr": "多",
+"full": "提多書",
+"id": 56,
+"chapters": 3
+},
+{
+"abbr": "門",
+"full": "腓利門書",
+"id": 57,
+"chapters": 1
+},
+{
+"abbr": "來",
+"full": "希伯來書",
+"id": 58,
+"chapters": 13
+},
+{
+"abbr": "雅",
+"full": "雅各書",
+"id": 59,
+"chapters": 5
+},
+{
+"abbr": "彼前",
+"full": "彼得前書",
+"id": 60,
+"chapters": 5
+},
+{
+"abbr": "彼後",
+"full": "彼得後書",
+"id": 61,
+"chapters": 3
+},
+{
+"abbr": "約壹",
+"full": "約翰一書",
+"id": 62,
+"chapters": 5
+},
+{
+"abbr": "約貳",
+"full": "約翰二書",
+"id": 63,
+"chapters": 1
+},
+{
+"abbr": "約參",
+"full": "約翰三書",
+"id": 64,
+"chapters": 1
+},
+{
+"abbr": "猶",
+"full": "猶大書",
+"id": 65,
+"chapters": 1
+},
+{
+"abbr": "啟",
+"full": "啟示錄",
+"id": 66,
+"chapters": 22
+}
+]
