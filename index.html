@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中壢靈糧堂 每日靈糧</title>
+<title>每日靈糧（中靈版）</title>
+<script>
+(function(){var t=localStorage.getItem('theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);var fs=localStorage.getItem('fs')||'';if(fs)document.documentElement.setAttribute('data-fs',fs);})();
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('theme',c);var b=document.getElementById('themeBtn');if(b)b.textContent=c==='light'?'🌙':'☀️';}
+function cycleFont(){var cur=document.documentElement.getAttribute('data-fs')||'';var n=cur===''?'lg':(cur==='lg'?'xl':'');if(n)document.documentElement.setAttribute('data-fs',n);else document.documentElement.removeAttribute('data-fs');localStorage.setItem('fs',n);var b=document.getElementById('fsBtn');if(b)b.textContent=n==='lg'?'字＋':(n==='xl'?'字＋＋':'字');}
+document.addEventListener('DOMContentLoaded',function(){var tb=document.getElementById('themeBtn');if(tb)tb.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️';var fb=document.getElementById('fsBtn');if(fb){var fs=document.documentElement.getAttribute('data-fs')||'';fb.textContent=fs==='lg'?'字＋':(fs==='xl'?'字＋＋':'字');}});
+</script>
 <style>
 :root{--bg:#0f1117;--sur:#1a1d27;--sur2:#22263a;--acc:#6c8fff;--acc2:#a78bfa;--acc3:#34d399;--tx:#e8eaf0;--tx2:#9ea3b8;--bdr:#2e3248;--red:#f87171;--yel:#fbbf24}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -11,10 +17,19 @@ body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang T
 header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .logo h1{font-size:16px;font-weight:700}
 .logo p{font-size:10px;color:var(--tx2);margin-top:1px}
-.nav{display:flex;gap:6px}
+.nav{display:flex;gap:6px;align-items:center}
 .nav a{font-size:12.5px;text-decoration:none;color:var(--tx2);padding:6px 14px;border-radius:18px;border:1.5px solid var(--bdr)}
 .nav a.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+.themebtn{background:transparent;border:1.5px solid var(--bdr);color:var(--tx2);border-radius:18px;padding:6px 11px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+.themebtn:hover{border-color:var(--acc)}
 .hdr-r{text-align:right}
+:root[data-theme="light"]{--bg:#f4f6fb;--sur:#ffffff;--sur2:#eef1f8;--acc:#3b5bdb;--acc2:#6741d9;--acc3:#0ca678;--tx:#1b1f2a;--tx2:#5c6378;--bdr:#dde2ec;--red:#e03131;--yel:#b8860b}
+:root[data-theme="light"] header{background:linear-gradient(135deg,#ffffff,#eef1f8)}
+:root[data-theme="light"] .nav a.on{color:#fff}
+:root[data-theme="light"] .btn-copy{color:#fff}
+:root[data-theme="light"] .sday.on .sd,:root[data-theme="light"] .sday.on .sc{color:#fff}
+:root[data-fs="lg"] .verse{font-size:16px}:root[data-fs="lg"] .notes-txt{font-size:15px}:root[data-fs="lg"] .yt-title{font-size:15px}:root[data-fs="lg"] .block-title{font-size:30px}
+:root[data-fs="xl"] .verse{font-size:18.5px}:root[data-fs="xl"] .notes-txt{font-size:17px}:root[data-fs="xl"] .yt-title{font-size:16.5px}:root[data-fs="xl"] .block-title{font-size:34px}
 .hdr-date{font-size:18px;font-weight:800;color:var(--acc)}
 .hdr-day{font-size:10px;color:var(--tx2);margin-top:2px}
 main{max-width:820px;margin:0 auto;padding:16px 16px 0}
@@ -62,11 +77,11 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1><p>陪你讀聖經 · 第一遍</p></div>
-  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a></nav>
+  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色">☀️</button></nav>
   <div class="hdr-r"><div class="hdr-date" id="hdrDate">—</div><div class="hdr-day" id="hdrDay"></div></div>
 </header>
 <main>
-  <div class="strip-lbl"><span id="stripLbl"></span><span id="monthBtns"></span></div>
+  <div class="strip-lbl"><span id="stripLbl"></span><span id="monthBtns"></span><button class="mbtn" id="todayBtn" onclick="goToday()" style="display:none">📍 回到今天</button></div>
   <div class="strip" id="strip"></div>
 
   <!-- 靈修進度 -->
@@ -74,7 +89,8 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
     <div class="block-hdr"><span class="block-tag">靈修進度</span><span class="block-title" id="devTitle">—</span></div>
     <div class="block-body">
       <div id="ytArea"><div class="loading">—</div></div>
-      <button class="btn-copy" id="copyBtn" onclick="copyLine()">📋 複製 LINE 訊息</button>
+      <button class="btn-copy" id="shareBtn" onclick="shareLine()" style="background:#06c755;color:#fff">📤 分享到 LINE</button>
+      <button class="btn-copy" id="copyBtn" onclick="copyLine()" style="margin-left:8px">📋 複製訊息</button>
       <div id="bibleArea" style="margin-top:14px"></div>
       <div id="notesWrap" style="display:none;margin-top:14px">
         <div class="stitle" id="notesTitle"></div>
@@ -100,7 +116,7 @@ const ABBR=Object.keys(BID).sort((a,b)=>b.length-a.length);
 const SINGLE={"俄":1,"門":1,"約貳":1,"約參":1,"猶":1};  // 單章書卷
 const WD=["日","一","二","三","四","五","六"];
 
-let SCHED={}, YTMAP={}, SUM={}, curKey="", curMonth="";
+let SCHED={}, YTMAP={}, SUM={}, curKey="", curMonth="", TODAY="";
 
 // 解析「代下8」「詩119」「約貳」→ {abbr,full,ch,unit,verses}
 function parseRef(s){
@@ -135,10 +151,13 @@ async function boot(){
   const todayKey=new Date().toLocaleDateString("sv").slice(0,10); // YYYY-MM-DD 本地時區
   curKey = SCHED[todayKey]?todayKey : keys[keys.length-1];
   curMonth = curKey.slice(0,7);
+  TODAY=todayKey;
   renderMonthBtns(keys);
   renderStrip();
   loadDay(curKey);
+  if(SCHED[TODAY])document.getElementById("todayBtn").style.display="";
 }
+function goToday(){if(!SCHED[TODAY])return;curMonth=TODAY.slice(0,7);renderMonthBtns(Object.keys(SCHED).sort());curKey=TODAY;renderStrip();loadDay(TODAY);window.scrollTo({top:0,behavior:"smooth"});}
 
 function renderMonthBtns(keys){
   const months=[...new Set(keys.map(k=>k.slice(0,7)))];
@@ -194,24 +213,32 @@ function renderYT(p){
   }
 }
 
+// 依序嘗試：直連 → allorigins → corsproxy（解決 CORS 與單一代理失效）
+function fetchJson(api){
+  const urls=[api,"https://api.allorigins.win/raw?url="+encodeURIComponent(api),"https://corsproxy.io/?url="+encodeURIComponent(api)];
+  return new Promise((resolve,reject)=>{
+    (function next(i){
+      if(i>=urls.length)return reject();
+      fetch(urls[i]).then(r=>{if(!r.ok)throw 0;return r.json();}).then(resolve).catch(()=>next(i+1));
+    })(0);
+  });
+}
 function renderBible(p){
   const area=document.getElementById("bibleArea");
   if(!p){area.innerHTML="";return;}
   area.innerHTML='<div class="loading">載入經文…</div>';
   const api=`https://bolls.life/api/CUNP/${BID[p.abbr]}/${p.ch}/`;
-  fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(api)}`)
-    .then(r=>r.json())
-    .then(vs=>{
-      let h='<div class="verse-wrap">';
-      for(const v of vs){
-        if(v.title)h+=`<div class="stitle">${v.title}</div>`;
-        h+=`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||"").replace(/<[^>]+>/g,"")}</span></div>`;
-      }
-      h+='</div>';
-      h+=`<a class="bg-link" href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(p.full+" "+p.ch)}&version=CUVMPT" target="_blank">↗ BibleGateway 和合本</a>`;
-      area.innerHTML=h;
-    })
-    .catch(()=>{area.innerHTML=`<a class="bg-link" href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(p.full+" "+p.ch)}&version=CUVMPT" target="_blank">↗ 至 BibleGateway 讀經</a>`;});
+  fetchJson(api).then(vs=>{
+    let h='<div class="verse-wrap">';
+    for(const v of vs){if(v.title)h+=`<div class="stitle">${v.title}</div>`;h+=`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||"").replace(/<[^>]+>/g,"")}</span></div>`;}
+    h+='</div>';
+    h+=`<a class="bg-link" href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(p.full+" "+p.ch)}&version=CUVMPT" target="_blank">↗ BibleGateway 和合本</a>`;
+    area.innerHTML=h;
+  }).catch(()=>{
+    area.innerHTML='<div class="loading">經文載入失敗</div>';
+    const b=document.createElement("button");b.className="bg-link";b.style.cursor="pointer";b.textContent="↻ 重試";b.onclick=()=>renderBible(p);area.appendChild(b);
+    const a=document.createElement("a");a.className="bg-link";a.style.marginLeft="8px";a.target="_blank";a.href="https://www.biblegateway.com/passage/?search="+encodeURIComponent(p.full+" "+p.ch)+"&version=CUVMPT";a.textContent="↗ 改至 BibleGateway";area.appendChild(a);
+  });
 }
 
 function renderNotes(p){
@@ -228,17 +255,17 @@ function readLink(range){
   return `<a class="bg-link" href="https://bolls.life/CUNP/${BID[p.abbr]}/${p.ch}/" target="_blank">↗ 開始讀經</a>`;
 }
 
-function copyLine(){
+function buildMsg(){
   const data=SCHED[curKey], p=parseRef(data.d);
   const lab=p?label(p):data.d;
   const vid=p?YTMAP[ytKey(p)]:"";
   let msg=`📖 ${fmtMD(curKey)} 每日靈糧\n靈修進度：${lab}`;
   if(vid)msg+=`\n📺 https://youtu.be/${vid}`;
   msg+=`\n（速讀5章：${data.s5}　速讀10章：${data.s10}）`;
-  navigator.clipboard.writeText(msg).then(()=>{
-    const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);
-  });
+  return msg;
 }
+function copyLine(){navigator.clipboard.writeText(buildMsg()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);});}
+function shareLine(){window.open("https://line.me/R/share?text="+encodeURIComponent(buildMsg()),"_blank");}
 
 boot();
 </script>

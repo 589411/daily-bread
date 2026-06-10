@@ -94,6 +94,9 @@
 - 影片縮圖：`https://i.ytimg.com/vi/{videoId}/hqdefault.jpg`。
 - 想取某影片標題可用免金鑰的 oEmbed：`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={id}&format=json`。
 - 速讀軌道是跨多章的範圍，不對應單一影片；網站只放「開始讀經」連結。
+- 深／淺色：`<html data-theme=light|dark>`；字級：`data-fs=''|lg|xl`。兩者存 localStorage（`theme`／`fs`），切換鈕在 header（兩頁都有）。首次進站深淺色跟隨系統。
+- 經文抓取走 `fetchJson()`：依序試「直連 → allorigins → corsproxy」，全失敗才顯示「重試」鈕＋BibleGateway 備援連結。
+- LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息內容由 `buildMsg()` 產生。
 
 ## 9. 尚未做（未來）
 

@@ -4,15 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我的讀經計畫 · 每日靈糧（中靈版）</title>
+<script>
+(function(){var t=localStorage.getItem('theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);var fs=localStorage.getItem('fs')||'';if(fs)document.documentElement.setAttribute('data-fs',fs);})();
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('theme',c);var b=document.getElementById('themeBtn');if(b)b.textContent=c==='light'?'🌙':'☀️';}
+function cycleFont(){var cur=document.documentElement.getAttribute('data-fs')||'';var n=cur===''?'lg':(cur==='lg'?'xl':'');if(n)document.documentElement.setAttribute('data-fs',n);else document.documentElement.removeAttribute('data-fs');localStorage.setItem('fs',n);var b=document.getElementById('fsBtn');if(b)b.textContent=n==='lg'?'字＋':(n==='xl'?'字＋＋':'字');}
+document.addEventListener('DOMContentLoaded',function(){var tb=document.getElementById('themeBtn');if(tb)tb.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️';var fb=document.getElementById('fsBtn');if(fb){var fs=document.documentElement.getAttribute('data-fs')||'';fb.textContent=fs==='lg'?'字＋':(fs==='xl'?'字＋＋':'字');}});
+</script>
 <style>
 :root{--bg:#0f1117;--sur:#1a1d27;--sur2:#22263a;--acc:#6c8fff;--acc2:#a78bfa;--acc3:#34d399;--tx:#e8eaf0;--tx2:#9ea3b8;--bdr:#2e3248;--red:#f87171;--yel:#fbbf24}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;min-height:100vh;padding-bottom:60px}
 header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .logo h1{font-size:15px;font-weight:700}
-.nav{display:flex;gap:6px}
+.nav{display:flex;gap:6px;align-items:center}
 .nav a{font-size:12.5px;text-decoration:none;color:var(--tx2);padding:6px 14px;border-radius:18px;border:1.5px solid var(--bdr)}
 .nav a.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+.themebtn{background:transparent;border:1.5px solid var(--bdr);color:var(--tx2);border-radius:18px;padding:6px 11px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
+.themebtn:hover{border-color:var(--acc)}
+:root[data-theme="light"]{--bg:#f4f6fb;--sur:#ffffff;--sur2:#eef1f8;--acc:#3b5bdb;--acc2:#6741d9;--acc3:#0ca678;--tx:#1b1f2a;--tx2:#5c6378;--bdr:#dde2ec;--red:#e03131;--yel:#b8860b}
+:root[data-theme="light"] header{background:linear-gradient(135deg,#ffffff,#eef1f8)}
+:root[data-theme="light"] .nav a.on{color:#fff}
+:root[data-theme="light"] .seg button.on{color:#fff}
+:root[data-theme="light"] .go{color:#fff}
+:root[data-fs="lg"] .verse{font-size:15px}:root[data-fs="lg"] .dch{font-size:15.5px}:root[data-fs="lg"] .summary{font-size:15px}:root[data-fs="lg"] .cpiece .vtxt{font-size:14px}
+:root[data-fs="xl"] .verse{font-size:17px}:root[data-fs="xl"] .dch{font-size:17px}:root[data-fs="xl"] .summary{font-size:16.5px}:root[data-fs="xl"] .cpiece .vtxt{font-size:15.5px}
 main{max-width:860px;margin:0 auto;padding:16px}
 .block{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;padding:16px}
 h2{font-size:14px;color:var(--acc2);margin-bottom:12px;font-weight:700}
@@ -66,7 +81,7 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1></div>
-  <div class="nav"><a href="index.html">每日進度</a><a href="planner.html" class="on">我的計畫</a></div>
+  <div class="nav"><a href="index.html">每日進度</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色">☀️</button></div>
 </header>
 <main>
   <div class="syncbar" id="syncBar"></div>
@@ -263,13 +278,15 @@ function loadDayDetail(body,units){
     fetchVerses(box, BID[FULL2ABBR[full]], ch);
   });
 }
+function fetchJson(api){
+  const urls=[api,"https://api.allorigins.win/raw?url="+encodeURIComponent(api),"https://corsproxy.io/?url="+encodeURIComponent(api)];
+  return new Promise((resolve,reject)=>{(function next(i){if(i>=urls.length)return reject();fetch(urls[i]).then(r=>{if(!r.ok)throw 0;return r.json();}).then(resolve).catch(()=>next(i+1));})(0);});
+}
 function fetchVerses(box,id,ch){
   box.innerHTML='<div class="loading">載入經文…</div>';
-  const api=`https://bolls.life/api/CUNP/${id}/${ch}/`;
-  fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(api)}`)
-    .then(r=>r.json())
+  fetchJson(`https://bolls.life/api/CUNP/${id}/${ch}/`)
     .then(vs=>{box.innerHTML=vs.map(v=>`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||'').replace(/<[^>]+>/g,'')}</span></div>`).join("");})
-    .catch(()=>{box.innerHTML='<div class="loading">經文載入失敗</div>';});
+    .catch(()=>{box.innerHTML='<div class="loading">經文載入失敗 </div>';const b=document.createElement("button");b.className="qbtn";b.textContent="↻ 重試";b.onclick=()=>fetchVerses(box,id,ch);box.appendChild(b);});
 }
 
 function planText(){
