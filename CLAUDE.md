@@ -24,6 +24,7 @@
 | `data/split_days.json` | 長章節分多天讀的對照（如 詩篇119→6天），多天指到**同一部**影片。 |
 | `tools/fetch_yt_map.py` | Colab 用：重建 `yt_map.json`。需 YouTube Data API key。 |
 | `tools/validate.py` | **驗證器**：改完 `data/` 一定要跑，過了再 commit。 |
+| `tools/predict_check.py` | **順序預測／驗證器**：依 `reading_order.json` 預測未來靈修、或比對教會新月曆表。見 §6。 |
 | `planner.html` | 自訂讀經規劃（獨立分頁），見 §10。 |
 | `manifest.webmanifest`、`sw.js`、`icons/` | PWA：可「加到主畫面」當 App、離線可開，見 §12。 |
 | `index_v1_backup.html` | 舊版備份，勿動。 |
@@ -70,8 +71,12 @@
   → 順序**大致穩定（約 97%）**，可用來**預測**未來月份；但**偶有局部換書**，故產生的未來進度一律標為「預測」，
   待教會公布該月月曆表後比對、修正局部差異，再併入 `data/schedule.json`。
   清理後的順序存於 `data/reading_order.json`（已修正「瑪垃基書→瑪拉基書」、去除「第/章/篇」、全形數字正規化）。
-- **預測流程**：在 `data/reading_order.json` 找一個已知錨點（例：歷代志下8 在 index 416 ＝ 2026-06-08），
-  往後逐日對應 `order[index+offset]`，產生草稿排程；公布後用月曆表驗證、修正，再 commit。
+- **預測流程一律用 `tools/predict_check.py`**（它自動以 schedule.json 最後一天為錨點，無需手算 index）：
+  1. 教會公布新月份 → 先轉錄該月三軌道進 `data/schedule.json`（靈修可先用 gen 草稿，見下）。
+  2. `python3 tools/predict_check.py verify 2026-07` → 看靈修命中率、列出不符的「局部換書」日，照月曆表修正那幾天。
+  3. 想省工：`python3 tools/predict_check.py gen 2026-07-01 2026-07-31` 產生「預測靈修」草稿（d 欄），貼進 schedule.json；s5/s10 仍須照月曆表填。
+  4. 最後跑 `tools/validate.py` → `ALL OK` → commit。
+  - 直接執行 `python3 tools/predict_check.py`（無參數）會對現有各月做自我檢查，印出命中率。
 - ⚠️ 早期 `202*.html`（2020–2024）跨了一個以上的循環，巨觀書序看似不同，多半是循環邊界與局部換書造成；
   以 `每日靈糧排序.csv` 整理出的單一循環順序為準。
 - ✅ 排程一律以**完整日期**為 key（不要用 `MM-DD`，會跨年錯位）。
@@ -95,18 +100,27 @@
 - 經文 API：`https://bolls.life/get-text/CUV/{書卷編號}/{章}/`（**和合本＝CUV**，不是 CUNP；端點是 `/get-text/` 不是 `/api/`）。回傳 `[{verse,text}]`。書卷編號＝正典 1–66（與 `bible_books.json` 一致，代下＝14）。前端用 `fetchJson()` 依序試直連→allorigins→corsproxy；和合本字間有多餘空白，渲染時以 `replace(/[\s　]/g,'')` 清除。
 - 影片縮圖：`https://i.ytimg.com/vi/{videoId}/hqdefault.jpg`。
 - 想取某影片標題可用免金鑰的 oEmbed：`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={id}&format=json`。
-- 速讀軌道是跨多章的範圍，不對應單一影片；網站只放「開始讀經」連結。
+- 速讀軌道是跨多章的範圍：除「開始讀經」連結外，`expandRange()` 會依正典書序把範圍（含同卷如 `羅4-8`、跨卷如 `徒27-羅3`）展開成各章，於 `<details>` 內列出每章第一遍影片（需 `bible_books.json` 的章數判斷換卷）。
+- 影片可內嵌播放：首頁 `playYT()`、規劃頁 `playPV()` 皆以 `youtube.com/embed/{id}` iframe 就地播放，並保留「↗ 在 YouTube 開啟」。
+- 無障礙／觸控：`:focus-visible` 外框、`prefers-reduced-motion` 關動畫、icon 按鈕有 `aria-label`、按鈕與日期格放大點擊區。
 - 深／淺色：`<html data-theme=light|dark>`；字級：`data-fs=''|lg|xl`。兩者存 localStorage（`theme`／`fs`），切換鈕在 header（兩頁都有）。首次進站深淺色跟隨系統。
 - 經文抓取走 `fetchJson()`：依序試「直連 → allorigins → corsproxy」，全失敗才顯示「重試」鈕＋BibleGateway 備援連結。
 - LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息內容由 `buildMsg()` 產生。
 
-## 9. 尚未做（未來）
+## 9. Roadmap（已完成／待辦）
 
-- **進度雲端同步**：planner.html 目前進度只存瀏覽器 localStorage（換裝置不通）。待接後端同步（見 §11）。
-- **順序預測驗證**：待教會公布 2026 年 7、8 月月曆表後，用 §6 流程比對 `data/reading_order.json` 的預測；
-  若持續高命中，即可一次產生整年排程（僅修正局部換書）。
-- 串接 LINE Messaging API 自動推播（目前是手動「複製 LINE 訊息」按鈕）。
-- 速讀（5章／10章）兩軌道的順序驗證：目前只有 5–6 月圖片資料，待累積後比照靈修軌做同樣的順序重建。
+**已完成**：完整日期排程、三軌道、第一遍影片對照（1189 章）、經文（bolls CUV）、摘要、
+分享到 LINE／複製、回到今天、深淺色、字級、自訂讀經規劃、雲端同步（§11）、PWA（§12）、
+無障礙、影片內嵌、速讀各章影片清單、教會傳統順序重建（§6）。
+
+**待辦（依優先序）**：
+
+1. **順序預測驗證**：待教會公布 2026 年 7、8 月月曆表，用 §6 流程比對 `reading_order.json` 的預測；
+   若持續高命中（目前 59/61），即可**一次產生整年排程**（只手動修正局部換書），不必每月轉錄。
+2. **速讀軌道順序重建**：目前只有 5–6 月速讀資料；累積數月後，比照靈修軌做速讀5/10 的順序考證與預測。
+3. **LINE 自動推播**：串接 LINE Messaging API，每天定時把當天進度推到群組（目前是手動「分享／複製」）。
+4. **離線經文**：經文來自外部 API，目前離線看不到；可考慮把當月靈修章節的經文預先快取進 PWA。
+5. **規劃頁長清單優化**：整年計畫上百天時，過去週次可收合／虛擬捲動，進一步提速。
 
 ## 10. 自訂讀經規劃（planner.html）
 

@@ -34,6 +34,18 @@ header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px soli
 :root[data-theme="light"] .go{color:#fff}
 :root[data-fs="lg"] .verse{font-size:15px}:root[data-fs="lg"] .dch{font-size:15.5px}:root[data-fs="lg"] .summary{font-size:15px}:root[data-fs="lg"] .cpiece .vtxt{font-size:14px}
 :root[data-fs="xl"] .verse{font-size:17px}:root[data-fs="xl"] .dch{font-size:17px}:root[data-fs="xl"] .summary{font-size:16.5px}:root[data-fs="xl"] .cpiece .vtxt{font-size:15.5px}
+/* 影片內嵌 */
+.ytembed{position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000;margin-top:8px}
+.ytembed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* 點擊區放大（手機／長輩友善） */
+.chk{width:22px;height:22px}
+.day-h{min-height:52px}
+.qbtn,.mbtn,.themebtn,.nav a{min-height:38px;display:inline-flex;align-items:center}
+.seg button{min-height:40px}
+.bk{min-height:34px;display:flex;align-items:center;justify-content:center}
+/* 無障礙 */
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:5px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 main{max-width:860px;margin:0 auto;padding:16px}
 .block{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;padding:16px}
 h2{font-size:14px;color:var(--acc2);margin-bottom:12px;font-weight:700}
@@ -66,8 +78,11 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
 .dch.done{text-decoration:line-through}
 .day-b{display:none;padding:0 12px 12px;border-top:1px solid var(--bdr)}
 .day-b.open{display:block}
+.day.today{border-color:var(--acc3);box-shadow:0 0 0 1px var(--acc3)}
+.todaybadge{display:inline-block;background:var(--acc3);color:#06281c;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;margin-left:6px}
+:root[data-theme="light"] .todaybadge{color:#fff}
 .cpiece{margin-top:10px}
-.cpiece a.vid{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--red);text-decoration:none;border:1px solid rgba(248,68,68,.3);background:rgba(248,68,68,.08);padding:4px 10px;border-radius:6px}
+.cpiece .vid{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--red);text-decoration:none;border:1px solid rgba(248,68,68,.3);background:rgba(248,68,68,.08);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;min-height:34px}
 .cpiece .vtxt{font-size:12.5px;font-weight:600;margin-bottom:4px;color:var(--acc)}
 .verse{display:flex;gap:8px;margin:5px 0;line-height:1.75;font-size:13px}
 .vnum{color:var(--acc);font-size:10px;font-weight:700;min-width:18px;margin-top:3px}
@@ -87,7 +102,7 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1></div>
-  <div class="nav"><a href="index.html">每日進度</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色">☀️</button></div>
+  <div class="nav"><a href="index.html">每日進度</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></div>
 </header>
 <main>
   <div class="syncbar" id="syncBar"></div>
@@ -129,6 +144,7 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
     <div class="summary" id="summary"></div>
     <div class="bar"><i id="barFill"></i></div>
     <div class="toolbar">
+      <button class="qbtn" onclick="jumpToday()">📍 今天／未讀</button>
       <button class="qbtn" onclick="copyPlan()">📋 複製計畫</button>
       <button class="qbtn" onclick="downloadPlan()">⬇ 下載 CSV</button>
       <button class="qbtn" onclick="resetProgress()">↺ 清除進度</button>
@@ -248,16 +264,18 @@ function renderPlan(){
     `<b>${plan[0].date}</b> 起，預計 <b>${last.date}</b> 完成。`;
   const list=document.getElementById("planList");
   list.innerHTML="";
+  const todayStr=new Date().toLocaleDateString("sv").slice(0,10);
   plan.forEach((p,idx)=>{
     const isDone=done.has(idx);
+    const isToday=p.date===todayStr;
     const wd="日一二三四五六"[new Date(p.date+"T00:00:00").getDay()];
     const lab=p.units.map(label).join("、");
-    const day=document.createElement("div");day.className="day";
+    const day=document.createElement("div");day.className="day"+(isToday?" today":"");
     day.innerHTML=
       `<div class="day-h ${isDone?'done':''}">
         <input type="checkbox" class="chk" ${isDone?'checked':''}>
         <span class="dnum">第${idx+1}天<br>${p.date.slice(5)} 週${wd}</span>
-        <span class="dch ${isDone?'done':''}">${lab}</span>
+        <span class="dch ${isDone?'done':''}">${lab}${isToday?'<span class="todaybadge">今天</span>':''}</span>
        </div>
        <div class="day-b"></div>`;
     const head=day.querySelector(".day-h"), body=day.querySelector(".day-b"), chk=day.querySelector(".chk");
@@ -267,6 +285,15 @@ function renderPlan(){
   });
   renderProgress();
 }
+function playPV(btn,vid){var box=btn.parentElement.querySelector('.pvembed');if(!box)return;box.innerHTML='<div class="ytembed"><iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="讀經影片"></iframe></div>';btn.style.display='none';}
+function jumpToday(){
+  const days=document.querySelectorAll('#planList .day');
+  if(!days.length)return;
+  let target=document.querySelector('#planList .day.today');
+  if(!target){const done=getDone();for(let i=0;i<plan.length;i++){if(!done.has(i)){target=days[i];break;}}}
+  if(!target)target=days[days.length-1];
+  target.scrollIntoView({behavior:'smooth',block:'center'});
+}
 function renderProgress(){
   const done=getDone();
   document.getElementById("barFill").style.width=(done.size/plan.length*100)+"%";
@@ -275,7 +302,7 @@ function renderProgress(){
 function loadDayDetail(body,units){
   body.innerHTML=units.map((u,i)=>{
     const vid=YTMAP[ytKey(u)];
-    const v=vid?`<a class="vid" href="https://www.youtube.com/watch?v=${vid}" target="_blank">▶ ${label(u)}／第一遍</a>`
+    const v=vid?`<button class="vid" onclick="playPV(this,'${vid}')">▶ 播放第一遍</button><a class="vid" style="margin-left:6px" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">↗ YouTube</a><div class="pvembed"></div>`
                :`<span class="loading">（第一遍無此章影片）</span>`;
     return `<div class="cpiece"><div class="vtxt">${label(u)}</div>${v}<div class="vbox" data-k="${u.full}|${u.single?1:u.ch}"></div></div>`;
   }).join("");

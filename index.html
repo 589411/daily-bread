@@ -36,6 +36,19 @@ header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px soli
 :root[data-theme="light"] .sday.on .sd,:root[data-theme="light"] .sday.on .sc{color:#fff}
 :root[data-fs="lg"] .verse{font-size:16px}:root[data-fs="lg"] .notes-txt{font-size:15px}:root[data-fs="lg"] .yt-title{font-size:15px}:root[data-fs="lg"] .block-title{font-size:30px}
 :root[data-fs="xl"] .verse{font-size:18.5px}:root[data-fs="xl"] .notes-txt{font-size:17px}:root[data-fs="xl"] .yt-title{font-size:16.5px}:root[data-fs="xl"] .block-title{font-size:34px}
+/* 影片內嵌 */
+.yt-thumb{position:relative}
+.yt-playicon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.yt-card{cursor:pointer}
+.ytembed{position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000}
+.ytembed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+/* 點擊區放大（手機／長輩友善） */
+.nav a,.themebtn,.mbtn{min-height:40px;display:inline-flex;align-items:center}
+.sday{min-height:64px}
+.btn-copy{min-height:46px}
+/* 無障礙 */
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:5px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 .hdr-date{font-size:18px;font-weight:800;color:var(--acc)}
 .hdr-day{font-size:10px;color:var(--tx2);margin-top:2px}
 main{max-width:820px;margin:0 auto;padding:16px 16px 0}
@@ -83,7 +96,7 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1><p>陪你讀聖經 · 第一遍</p></div>
-  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色">☀️</button></nav>
+  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></nav>
   <div class="hdr-r"><div class="hdr-date" id="hdrDate">—</div><div class="hdr-day" id="hdrDay"></div></div>
 </header>
 <main>
@@ -108,9 +121,9 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
   <!-- 速讀 -->
   <div class="row3">
     <div class="block"><div class="block-hdr"><span class="block-tag">速讀 5 章</span></div>
-      <div class="block-body"><div class="range" id="s5">—</div><div id="s5link"></div></div></div>
+      <div class="block-body"><div class="range" id="s5">—</div><div id="s5link"></div><div id="s5vids"></div></div></div>
     <div class="block"><div class="block-hdr"><span class="block-tag">速讀 10 章</span></div>
-      <div class="block-body"><div class="range" id="s10">—</div><div id="s10link"></div></div></div>
+      <div class="block-body"><div class="range" id="s10">—</div><div id="s10link"></div><div id="s10vids"></div></div></div>
   </div>
 </main>
 <div class="toast" id="toast">已複製！</div>
@@ -122,7 +135,7 @@ const ABBR=Object.keys(BID).sort((a,b)=>b.length-a.length);
 const SINGLE={"俄":1,"門":1,"約貳":1,"約參":1,"猶":1};  // 單章書卷
 const WD=["日","一","二","三","四","五","六"];
 
-let SCHED={}, YTMAP={}, SUM={}, curKey="", curMonth="", TODAY="";
+let SCHED={}, YTMAP={}, SUM={}, BYID={}, curKey="", curMonth="", TODAY="";
 
 // 解析「代下8」「詩119」「約貳」→ {abbr,full,ch,unit,verses}
 function parseRef(s){
@@ -144,11 +157,14 @@ function fmtMD(key){const [y,m,d]=key.split("-");return `${parseInt(m)}/${parseI
 
 async function boot(){
   try{
-    [SCHED,YTMAP,SUM]=await Promise.all([
+    let BB;
+    [SCHED,YTMAP,SUM,BB]=await Promise.all([
       fetch("data/schedule.json").then(r=>r.json()),
       fetch("data/yt_map.json").then(r=>r.json()),
       fetch("data/summary.json").then(r=>r.json()).catch(()=>({})),
+      fetch("data/bible_books.json").then(r=>r.json()).catch(()=>[]),
     ]);
+    BB.forEach(b=>BYID[b.id]=b);
   }catch(e){
     document.getElementById("bibleArea").innerHTML='<div class="loading">資料載入失敗，請以網頁伺服器或 GitHub Pages 開啟（無法直接用 file:// 開啟）。</div>';
     return;
@@ -203,6 +219,38 @@ function loadDay(k){
   document.getElementById("s10").textContent=data.s10;
   document.getElementById("s5link").innerHTML=readLink(data.s5);
   document.getElementById("s10link").innerHTML=readLink(data.s10);
+  renderSpeedVids("s5vids",data.s5);
+  renderSpeedVids("s10vids",data.s10);
+}
+
+// 把速讀範圍（如「結48-但9」「徒27-羅3」）依正典書序展開成各章，列出每章第一遍影片
+function expandRange(rng){
+  const parts=(rng||"").split("-");
+  const s=parseRef(parts[0]); if(!s)return [];
+  if(parts.length<2)return [s];
+  let e=parseRef(parts[1]);
+  if(!e){const n=parseInt(parts[1]); if(n)e={abbr:s.abbr,ch:n};}  // 同卷範圍：結尾只有數字（如 羅4-8）
+  if(!e)return [s];
+  const out=[]; let id=BID[s.abbr], ch=s.ch; const endId=BID[e.abbr], endCh=e.ch; let g=0;
+  while(g++<500){
+    const bk=BYID[id]; if(!bk)break;
+    out.push({full:bk.full,abbr:bk.abbr,ch:ch,single:bk.chapters===1});
+    if(id===endId&&ch===endCh)break;
+    ch++; if(ch>bk.chapters){id++;ch=1;}
+    if(id>endId)break;
+  }
+  return out;
+}
+function renderSpeedVids(elId,rng){
+  const el=document.getElementById(elId); if(!el)return;
+  const chs=Object.keys(BYID).length?expandRange(rng):[];
+  if(!chs.length){el.innerHTML="";return;}
+  const items=chs.map(c=>{
+    const k=c.full+(c.single?"":c.ch), lab=c.full+(c.single?"":c.ch), vid=YTMAP[k];
+    return vid?`<a class="bg-link" style="margin:4px 4px 0 0" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">▶ ${lab}</a>`
+              :`<span class="loading" style="margin:4px 8px 0 0">${lab}（無）</span>`;
+  }).join("");
+  el.innerHTML=`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:var(--tx2);padding:4px 0">▶ 各章第一遍影片（共 ${chs.length} 章）</summary><div style="margin-top:4px;display:flex;flex-wrap:wrap">${items}</div></details>`;
 }
 
 function renderYT(p){
@@ -210,13 +258,19 @@ function renderYT(p){
   if(!p){area.innerHTML='<div class="loading">—</div>';return;}
   const vid=YTMAP[ytKey(p)], lab=label(p);
   if(vid){
-    area.innerHTML=`<a class="yt-card" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">
-      <div class="yt-thumb"><img src="https://i.ytimg.com/vi/${vid}/hqdefault.jpg" loading="lazy"></div>
+    area.innerHTML=`<div class="yt-card" role="button" tabindex="0" aria-label="在此播放 ${lab} 影片" onclick="playYT('${vid}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();playYT('${vid}')}">
+      <div class="yt-thumb"><img src="https://i.ytimg.com/vi/${vid}/hqdefault.jpg" loading="lazy" alt="${lab} 影片縮圖"><span class="yt-playicon" aria-hidden="true">▶</span></div>
       <div class="yt-info"><div class="yt-title">${lab}／陪你讀聖經（第一遍）</div>
-      <span class="yt-play">▶ 前往觀看</span></div></a>`;
+      <span class="yt-play">▶ 在此播放</span></div></div>
+      <a class="bg-link" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener" style="margin-top:6px">↗ 在 YouTube 開啟</a>`;
   }else{
     area.innerHTML=`<div class="yt-miss">第一遍尚無此章影片。<a class="bg-link" href="https://www.youtube.com/@jam2939/search?query=${encodeURIComponent(lab)}" target="_blank">🔍 到頻道搜尋</a></div>`;
   }
+}
+function playYT(vid){
+  document.getElementById("ytArea").innerHTML=
+    `<div class="ytembed"><iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="讀經影片"></iframe></div>
+     <a class="bg-link" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener" style="margin-top:6px">↗ 在 YouTube 開啟</a>`;
 }
 
 // 依序嘗試：直連 → allorigins → corsproxy（解決 CORS 與單一代理失效）
