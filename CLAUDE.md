@@ -24,6 +24,8 @@
 | `data/split_days.json` | 長章節分多天讀的對照（如 詩篇119→6天），多天指到**同一部**影片。 |
 | `tools/fetch_yt_map.py` | Colab 用：重建 `yt_map.json`。需 YouTube Data API key。 |
 | `tools/validate.py` | **驗證器**：改完 `data/` 一定要跑，過了再 commit。 |
+| `planner.html` | 自訂讀經規劃（獨立分頁），見 §10。 |
+| `manifest.webmanifest`、`sw.js`、`icons/` | PWA：可「加到主畫面」當 App、離線可開，見 §12。 |
 | `index_v1_backup.html` | 舊版備份，勿動。 |
 | `202*.html`、`每日靈糧*.csv` | **舊計畫的原始檔，已被 .gitignore。是不同的讀經次序，請勿當作排程來源**（見 §6）。 |
 
@@ -152,3 +154,12 @@ planner.html 內建雲端同步，**未填金鑰時自動降級為只存本機**
 - 同步衝突採最後寫入為準。
 - ⚠️ 同步碼安全性：知道碼的人就能讀寫該筆（碼為隨機 6 碼，純讀經進度，風險低）。Google 路徑才有逐人隔離。
 - 未填金鑰時整個雲端區塊自動停用，只存本機，網站照常運作。
+
+## 12. PWA（加到主畫面／離線）
+
+`manifest.webmanifest`＋`sw.js`＋`icons/` 讓網站可「加到主畫面」當 App 開、離線也能載入。
+
+- 兩頁 `<head>` 都有 `<link rel="manifest">`、`theme-color`、`apple-touch-icon`，並註冊 `sw.js`。
+- `sw.js` 對**同源檔案**採 network-first：有網路時一律抓最新（更新即時生效，不會卡舊版），離線才回退快取；外部資源（bolls 經文／YouTube／Firebase）不攔截。
+- **維護**：若新增了需要離線快取的檔案，加進 `sw.js` 的 `SHELL` 陣列，並把 `CACHE` 版本字串（`daily-bread-v1`）改成 v2…以淘汰舊快取。一般改 HTML／JSON 不必動（network-first 會自動更新）。
+- 圖示：`icons/icon-192.png`、`icon-512.png`（用 Pillow 畫的開書圖，要換可重畫同尺寸覆蓋）。

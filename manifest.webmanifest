@@ -1,0 +1,17 @@
+{
+  "name": "每日靈糧（中靈版）",
+  "short_name": "每日靈糧",
+  "description": "中壢靈糧堂每日讀經進度、經文與陪你讀聖經第一遍影片",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "lang": "zh-Hant",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}
