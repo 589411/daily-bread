@@ -23,9 +23,23 @@
 5. **測試**：開 `https://daily-bread-line.<你的帳號>.workers.dev/` 預覽今天訊息；
    加 `?send=1` 會**實際推一次**到群組，確認沒問題。
 
+## 多群組「邀進去就自動加入」（推薦，免每次手動）
+
+設定一次後，以後要把每日靈糧加到新群組，**只要把官方帳號邀進該群組**即可——Worker 會自動把群組存進名單；官方帳號離開群組則自動移除。
+
+1. **建 KV**：Cloudflare → Storage & Databases → **KV → Create**，命名如 `daily-bread-groups`。
+2. **綁定到 Worker**：Worker → Settings → **Bindings → Add → KV namespace**，變數名稱填 **`GROUPS`**，選上面那個 namespace。
+3. **加簽章驗證**（防偽造）：Worker Secret 新增 **`LINE_CHANNEL_SECRET`** = LINE channel 的 Channel secret（Basic settings 裡）。
+4. **設 Webhook**：LINE Developers → Messaging API → **Webhook URL** 填本 Worker 網址、開啟 **Use webhook**（這次要**保持開啟**，才能收 join/leave 事件）。建議關掉「自動回應訊息」避免雜訊。
+5. 完成！把官方帳號邀進任何群組 → 它會回覆「已加入推播」並開始每天推。
+   - `GROUP_ID`（主群組）會永遠包含在名單裡，與 KV 名單合併去重。
+   - 看目前群組數：開 `https://<worker>.workers.dev/?list=1`。
+
+> 沒有做這段也能跑：不綁 KV、不設 webhook 時，Worker 只會推 `GROUP_ID` 那一個群組（即目前狀態）。
+
 ## 注意
 
 - `worker.js` 執行時即時抓 `daily-bread.launchdock.app/data/*.json`，所以永遠跟網站同步，更新排程不用改 Worker。
-- 測試用的 `?send=1` 端點任何人知道網址都能觸發推送（只會送當天那則固定訊息）。確認可用後，可把 `worker.js` 裡的 `fetch(...)` handler 整段刪掉，只留 `scheduled`，就只剩 cron 會推。
-- LINE 免費方案有每月訊息上限，一天一則遠低於上限（額度以 LINE 當前定價為準）。
-- token 一律放 Cloudflare Secret，**不要**寫進程式碼或 commit。
+- `?send=1`／webhook 端點：有設 `LINE_CHANNEL_SECRET` 後，webhook 會驗章，偽造的 POST 會被擋（401）。`?send=1` 仍是公開測試入口，知道網址者可觸發一次推送（只送當天訊息）。
+- LINE 免費方案有每月訊息上限，一天一則遠低於上限（額度以 LINE 當前定價為準；群組變多時留意總量）。
+- token／channel secret 一律放 Cloudflare Secret，**不要**寫進程式碼或 commit。
