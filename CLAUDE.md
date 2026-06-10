@@ -25,6 +25,7 @@
 | `tools/fetch_yt_map.py` | Colab 用：重建 `yt_map.json`。需 YouTube Data API key。 |
 | `tools/validate.py` | **驗證器**：改完 `data/` 一定要跑，過了再 commit。 |
 | `tools/predict_check.py` | **順序預測／驗證器**：依 `reading_order.json` 預測未來靈修、或比對教會新月曆表。見 §6。 |
+| `tools/line-worker/` | LINE 每日自動推播的 Cloudflare Worker（`worker.js`＋部署說明）。見 §13。 |
 | `planner.html` | 自訂讀經規劃（獨立分頁），見 §10。 |
 | `manifest.webmanifest`、`sw.js`、`icons/` | PWA：可「加到主畫面」當 App、離線可開，見 §12。 |
 | `index_v1_backup.html` | 舊版備份，勿動。 |
@@ -118,7 +119,7 @@
 1. **順序預測驗證**：待教會公布 2026 年 7、8 月月曆表，用 §6 流程比對 `reading_order.json` 的預測；
    若持續高命中（目前 59/61），即可**一次產生整年排程**（只手動修正局部換書），不必每月轉錄。
 2. **速讀軌道順序重建**：目前只有 5–6 月速讀資料；累積數月後，比照靈修軌做速讀5/10 的順序考證與預測。
-3. **LINE 自動推播**：串接 LINE Messaging API，每天定時把當天進度推到群組（目前是手動「分享／複製」）。
+3. **LINE 自動推播**：Worker 已備妥（§13、`tools/line-worker/`），待填 token/groupId 部署即可上線。
 4. **離線經文**：經文來自外部 API，目前離線看不到；可考慮把當月靈修章節的經文預先快取進 PWA。
 5. **規劃頁長清單優化**：整年計畫上百天時，過去週次可收合／虛擬捲動，進一步提速。
 
@@ -177,3 +178,13 @@ planner.html 內建雲端同步，**未填金鑰時自動降級為只存本機**
 - `sw.js` 對**同源檔案**採 network-first：有網路時一律抓最新（更新即時生效，不會卡舊版），離線才回退快取；外部資源（bolls 經文／YouTube／Firebase）不攔截。
 - **維護**：若新增了需要離線快取的檔案，加進 `sw.js` 的 `SHELL` 陣列，並把 `CACHE` 版本字串（`daily-bread-v1`）改成 v2…以淘汰舊快取。一般改 HTML／JSON 不必動（network-first 會自動更新）。
 - 圖示：`icons/icon-192.png`、`icon-512.png`（用 Pillow 畫的開書圖，要換可重畫同尺寸覆蓋）。
+
+## 13. LINE 每日自動推播（Cloudflare Worker）
+
+GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare Worker ＋ Cron Trigger** 每天呼叫 LINE Messaging API push。
+
+- 程式與部署說明：`tools/line-worker/`（`worker.js`＋`README.md`）。
+- **秘密不進 repo**：`LINE_TOKEN`、`GROUP_ID` 放 Cloudflare Worker 的加密環境變數。
+- Worker 執行時即時抓 `daily-bread.launchdock.app/data/*.json` 組訊息（用與前端相同的 `parseRef`/`ytKey` 邏輯），所以排程更新後不必改 Worker。
+- Cron `0 23 * * *`(UTC) = 台灣 07:00。Cron Trigger 不需要 DNS，不影響網域。
+- groupId 取得：用 webhook.site 抓一次（步驟見 `tools/line-worker/README.md`），日常推播不需 webhook。
