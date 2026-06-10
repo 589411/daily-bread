@@ -284,8 +284,8 @@ function fetchJson(api){
 }
 function fetchVerses(box,id,ch){
   box.innerHTML='<div class="loading">載入經文…</div>';
-  fetchJson(`https://bolls.life/api/CUNP/${id}/${ch}/`)
-    .then(vs=>{box.innerHTML=vs.map(v=>`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||'').replace(/<[^>]+>/g,'')}</span></div>`).join("");})
+  fetchJson(`https://bolls.life/get-text/CUV/${id}/${ch}/`)
+    .then(vs=>{box.innerHTML=vs.map(v=>`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||'').replace(/<[^>]+>/g,'').replace(/[\s　]/g,'')}</span></div>`).join("");})
     .catch(()=>{box.innerHTML='<div class="loading">經文載入失敗 </div>';const b=document.createElement("button");b.className="qbtn";b.textContent="↻ 重試";b.onclick=()=>fetchVerses(box,id,ch);box.appendChild(b);});
 }
 

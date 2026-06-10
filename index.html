@@ -227,10 +227,10 @@ function renderBible(p){
   const area=document.getElementById("bibleArea");
   if(!p){area.innerHTML="";return;}
   area.innerHTML='<div class="loading">載入經文…</div>';
-  const api=`https://bolls.life/api/CUNP/${BID[p.abbr]}/${p.ch}/`;
+  const api=`https://bolls.life/get-text/CUV/${BID[p.abbr]}/${p.ch}/`;
   fetchJson(api).then(vs=>{
     let h='<div class="verse-wrap">';
-    for(const v of vs){if(v.title)h+=`<div class="stitle">${v.title}</div>`;h+=`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||"").replace(/<[^>]+>/g,"")}</span></div>`;}
+    for(const v of vs){if(v.title)h+=`<div class="stitle">${v.title}</div>`;h+=`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||"").replace(/<[^>]+>/g,"").replace(/[\s　]/g,"")}</span></div>`;}
     h+='</div>';
     h+=`<a class="bg-link" href="https://www.biblegateway.com/passage/?search=${encodeURIComponent(p.full+" "+p.ch)}&version=CUVMPT" target="_blank">↗ BibleGateway 和合本</a>`;
     area.innerHTML=h;
@@ -252,7 +252,7 @@ function renderNotes(p){
 function readLink(range){
   const p=parseRef((range||"").split("-")[0]);
   if(!p)return "";
-  return `<a class="bg-link" href="https://bolls.life/CUNP/${BID[p.abbr]}/${p.ch}/" target="_blank">↗ 開始讀經</a>`;
+  return `<a class="bg-link" href="https://bolls.life/CUV/${BID[p.abbr]}/${p.ch}/" target="_blank">↗ 開始讀經</a>`;
 }
 
 function buildMsg(){

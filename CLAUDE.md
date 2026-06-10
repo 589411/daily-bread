@@ -90,7 +90,7 @@
 
 ## 8. 技術備註
 
-- 經文 API：`https://bolls.life/api/CUNP/{書卷編號}/{章}/`，經 `api.allorigins.win` proxy 解決 CORS。和合本＝CUNP。
+- 經文 API：`https://bolls.life/get-text/CUV/{書卷編號}/{章}/`（**和合本＝CUV**，不是 CUNP；端點是 `/get-text/` 不是 `/api/`）。回傳 `[{verse,text}]`。書卷編號＝正典 1–66（與 `bible_books.json` 一致，代下＝14）。前端用 `fetchJson()` 依序試直連→allorigins→corsproxy；和合本字間有多餘空白，渲染時以 `replace(/[\s　]/g,'')` 清除。
 - 影片縮圖：`https://i.ytimg.com/vi/{videoId}/hqdefault.jpg`。
 - 想取某影片標題可用免金鑰的 oEmbed：`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={id}&format=json`。
 - 速讀軌道是跨多章的範圍，不對應單一影片；網站只放「開始讀經」連結。
