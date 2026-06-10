@@ -11,6 +11,9 @@ body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang T
 header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .logo h1{font-size:16px;font-weight:700}
 .logo p{font-size:10px;color:var(--tx2);margin-top:1px}
+.nav{display:flex;gap:6px}
+.nav a{font-size:12.5px;text-decoration:none;color:var(--tx2);padding:6px 14px;border-radius:18px;border:1.5px solid var(--bdr)}
+.nav a.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
 .hdr-r{text-align:right}
 .hdr-date{font-size:18px;font-weight:800;color:var(--acc)}
 .hdr-day{font-size:10px;color:var(--tx2);margin-top:2px}
@@ -59,6 +62,7 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1><p>陪你讀聖經 · 第一遍</p></div>
+  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a></nav>
   <div class="hdr-r"><div class="hdr-date" id="hdrDate">—</div><div class="hdr-day" id="hdrDay"></div></div>
 </header>
 <main>

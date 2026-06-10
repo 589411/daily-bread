@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的讀經計畫 · 每日靈糧（中靈版）</title>
+<style>
+:root{--bg:#0f1117;--sur:#1a1d27;--sur2:#22263a;--acc:#6c8fff;--acc2:#a78bfa;--acc3:#34d399;--tx:#e8eaf0;--tx2:#9ea3b8;--bdr:#2e3248;--red:#f87171;--yel:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;min-height:100vh;padding-bottom:60px}
+header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.logo h1{font-size:15px;font-weight:700}
+.nav{display:flex;gap:6px}
+.nav a{font-size:12.5px;text-decoration:none;color:var(--tx2);padding:6px 14px;border-radius:18px;border:1.5px solid var(--bdr)}
+.nav a.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
+main{max-width:860px;margin:0 auto;padding:16px}
+.block{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;padding:16px}
+h2{font-size:14px;color:var(--acc2);margin-bottom:12px;font-weight:700}
+.lbl{font-size:12px;color:var(--tx2);margin:10px 0 6px;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:transparent;color:var(--tx2);border:none;padding:7px 14px;font-size:12.5px;cursor:pointer;font-family:inherit;border-right:1px solid var(--bdr)}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--acc);color:#000;font-weight:700}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.qbtn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx2);border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
+.qbtn:hover{border-color:var(--acc);color:var(--acc)}
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:5px;max-height:190px;overflow-y:auto;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--bdr)}
+.bk{font-size:12px;padding:5px 4px;text-align:center;border-radius:6px;border:1px solid var(--bdr);cursor:pointer;color:var(--tx2);user-select:none}
+.bk.on{background:rgba(108,143,255,.18);border-color:var(--acc);color:var(--tx)}
+input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--bdr);color:var(--tx);border-radius:7px;padding:7px 10px;font-size:13px;font-family:inherit}
+.go{background:var(--acc3);color:#06281c;border:none;border-radius:9px;padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:14px}
+.go:hover{filter:brightness(1.08)}
+.summary{font-size:13px;line-height:1.7;color:var(--tx);background:var(--sur2);border-radius:8px;padding:12px;margin-bottom:10px}
+.summary b{color:var(--acc3)}
+.bar{height:8px;background:var(--bdr);border-radius:5px;overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;background:var(--acc3);width:0}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.day{border:1px solid var(--bdr);border-radius:9px;margin-bottom:7px;overflow:hidden}
+.day-h{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer}
+.day-h:hover{background:var(--sur2)}
+.day-h.done{opacity:.55}
+.chk{width:18px;height:18px;flex-shrink:0;accent-color:var(--acc3)}
+.dnum{font-size:11px;color:var(--tx2);min-width:64px}
+.dch{font-size:13.5px;font-weight:700;flex:1}
+.dch.done{text-decoration:line-through}
+.day-b{display:none;padding:0 12px 12px;border-top:1px solid var(--bdr)}
+.day-b.open{display:block}
+.cpiece{margin-top:10px}
+.cpiece a.vid{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--red);text-decoration:none;border:1px solid rgba(248,68,68,.3);background:rgba(248,68,68,.08);padding:4px 10px;border-radius:6px}
+.cpiece .vtxt{font-size:12.5px;font-weight:600;margin-bottom:4px;color:var(--acc)}
+.verse{display:flex;gap:8px;margin:5px 0;line-height:1.75;font-size:13px}
+.vnum{color:var(--acc);font-size:10px;font-weight:700;min-width:18px;margin-top:3px}
+.loading{color:var(--tx2);font-size:12px;padding:6px 0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc3);color:#06281c;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.syncbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:10px;font-size:12px;color:var(--tx2)}
+.syncbtn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.syncbtn:hover{border-color:var(--acc)}
+.syncdot{width:7px;height:7px;border-radius:50%;background:var(--tx2);display:inline-block}
+.syncdot.on{background:var(--acc3)}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<header>
+  <div class="logo"><h1>📖 每日靈糧（中靈版）</h1></div>
+  <div class="nav"><a href="index.html">每日進度</a><a href="planner.html" class="on">我的計畫</a></div>
+</header>
+<main>
+  <div class="syncbar" id="syncBar"></div>
+  <div class="block">
+    <h2>🗂️ 規劃我的讀經計畫</h2>
+
+    <div class="lbl">讀經順序</div>
+    <div class="seg" id="orderSeg">
+      <button data-v="canon" class="on">正典順序（創→啟）</button>
+      <button data-v="church">教會傳統順序</button>
+    </div>
+
+    <div class="lbl">選擇書卷</div>
+    <div class="quick">
+      <button class="qbtn" onclick="pick('all')">全選</button>
+      <button class="qbtn" onclick="pick('ot')">舊約</button>
+      <button class="qbtn" onclick="pick('nt')">新約</button>
+      <button class="qbtn" onclick="pick('gospel')">福音書</button>
+      <button class="qbtn" onclick="pick('none')">清除</button>
+    </div>
+    <div class="books" id="books"></div>
+
+    <div class="lbl">速度</div>
+    <div class="seg" id="paceSeg">
+      <button data-v="perday" class="on">每天幾章</button>
+      <button data-v="byend">指定完成日</button>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <span>起始日 <input type="date" id="startDate"></span>
+      <span id="perdayBox">每天 <input type="number" id="cpd" min="1" max="50" value="3" style="width:64px"> 章</span>
+      <span id="byendBox" style="display:none">完成日 <input type="date" id="endDate"></span>
+    </div>
+
+    <button class="go" onclick="generate()">產生計畫</button>
+  </div>
+
+  <div class="block" id="result" style="display:none">
+    <h2>📅 我的計畫</h2>
+    <div class="summary" id="summary"></div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="toolbar">
+      <button class="qbtn" onclick="copyPlan()">📋 複製計畫</button>
+      <button class="qbtn" onclick="downloadPlan()">⬇ 下載 CSV</button>
+      <button class="qbtn" onclick="resetProgress()">↺ 清除進度</button>
+    </div>
+    <div id="planList"></div>
+  </div>
+</main>
+<div class="toast" id="toast">已複製！</div>
+
+<script>
+const BID={"創":1,"出":2,"利":3,"民":4,"申":5,"書":6,"士":7,"得":8,"撒上":9,"撒下":10,"王上":11,"王下":12,"代上":13,"代下":14,"拉":15,"尼":16,"斯":17,"伯":18,"詩":19,"箴":20,"傳":21,"歌":22,"賽":23,"耶":24,"哀":25,"結":26,"但":27,"何":28,"珥":29,"摩":30,"俄":31,"拿":32,"彌":33,"鴻":34,"哈":35,"番":36,"該":37,"亞":38,"瑪":39,"太":40,"可":41,"路":42,"約":43,"徒":44,"羅":45,"林前":46,"林後":47,"加":48,"弗":49,"腓":50,"西":51,"帖前":52,"帖後":53,"提前":54,"提後":55,"多":56,"門":57,"來":58,"雅":59,"彼前":60,"彼後":61,"約壹":62,"約貳":63,"約參":64,"猶":65,"啟":66};
+let BOOKS=[], YTMAP={}, ORDER=[], FULL2ABBR={}, ID2BOOK={};
+let plan=[], planSig="", order="canon", pace="perday", selected=new Set();
+const OT=new Set(Array.from({length:39},(_,i)=>i+1)), GOSPEL=new Set([40,41,42,43]);
+
+// ── 雲端同步設定（在 Firebase Console 建專案後填入；見 CLAUDE.md §11）──
+const FIREBASE_CONFIG={apiKey:"AIzaSyDjlL_b4Uiz0cAQjbdCiePZO9oXrEQm0zI",authDomain:"daily-bread-f88ac.firebaseapp.com",projectId:"daily-bread-f88ac",storageBucket:"daily-bread-f88ac.firebasestorage.app",messagingSenderId:"258444297032",appId:"1:258444297032:web:2287e0259ef81a0ca0a97d"};
+const CLOUD_ENABLED=!Object.values(FIREBASE_CONFIG).some(v=>String(v).includes("填入"));
+let uid=null, cloudReady=false, restoring=false, syncMode="none", syncCode="";
+
+async function boot(){
+  [BOOKS,YTMAP,ORDER]=await Promise.all([
+    fetch("data/bible_books.json").then(r=>r.json()),
+    fetch("data/yt_map.json").then(r=>r.json()),
+    fetch("data/reading_order.json").then(r=>r.json()),
+  ]);
+  BOOKS.forEach(b=>{FULL2ABBR[b.full]=b.abbr;ID2BOOK[b.id]=b;});
+  // 書卷格子
+  const el=document.getElementById("books");
+  el.innerHTML=BOOKS.map(b=>`<div class="bk on" data-id="${b.id}" onclick="toggleBook(${b.id})">${b.full}</div>`).join("");
+  BOOKS.forEach(b=>selected.add(b.id));
+  document.getElementById("startDate").value=new Date().toLocaleDateString("sv").slice(0,10);
+  // segmented controls
+  segInit("orderSeg",v=>order=v);
+  segInit("paceSeg",v=>{pace=v;document.getElementById("perdayBox").style.display=v==="perday"?"":"none";document.getElementById("byendBox").style.display=v==="byend"?"":"none";});
+  initCloud();
+}
+function segInit(id,cb){
+  const seg=document.getElementById(id);
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");cb(b.dataset.v);});
+}
+function toggleBook(id){selected.has(id)?selected.delete(id):selected.add(id);refreshBooks();}
+function refreshBooks(){document.querySelectorAll(".bk").forEach(e=>e.classList.toggle("on",selected.has(+e.dataset.id)));}
+function pick(kind){
+  selected.clear();
+  for(const b of BOOKS){
+    if(kind==="all")selected.add(b.id);
+    else if(kind==="ot"&&OT.has(b.id))selected.add(b.id);
+    else if(kind==="nt"&&!OT.has(b.id))selected.add(b.id);
+    else if(kind==="gospel"&&GOSPEL.has(b.id))selected.add(b.id);
+  }
+  refreshBooks();
+}
+
+// 產生「章單位」清單（每筆 = 一章）
+function unitsFor(){
+  let units=[];
+  if(order==="canon"){
+    for(const b of BOOKS){
+      if(!selected.has(b.id))continue;
+      if(b.chapters===1)units.push({full:b.full,ch:1,single:true});
+      else for(let c=1;c<=b.chapters;c++)units.push({full:b.full,ch:c,single:false});
+    }
+  }else{ // church：照 reading_order，過濾選取書卷
+    const sel=new Set([...selected].map(id=>ID2BOOK[id].full));
+    for(const key of ORDER){
+      const m=key.match(/^(.+?)(\d+)?$/);
+      let full=key, ch=1, single=true;
+      // 用書卷全名比對（最長優先）
+      const hit=BOOKS.find(b=>key.startsWith(b.full));
+      if(!hit)continue;
+      full=hit.full; single=hit.chapters===1;
+      ch=single?1:parseInt(key.slice(hit.full.length))||1;
+      if(sel.has(full))units.push({full,ch,single});
+    }
+  }
+  return units;
+}
+function ytKey(u){return u.full+(u.single?"":u.ch);}
+function label(u){return u.full+(u.single?"":u.ch);}
+
+function generate(){
+  const units=unitsFor();
+  if(!units.length){alert("請至少選一卷書");return;}
+  const start=new Date(document.getElementById("startDate").value+"T00:00:00");
+  if(isNaN(start)){alert("請選起始日");return;}
+  let cpd;
+  if(pace==="perday"){
+    cpd=Math.max(1,parseInt(document.getElementById("cpd").value)||1);
+  }else{
+    const end=new Date(document.getElementById("endDate").value+"T00:00:00");
+    if(isNaN(end)||end<start){alert("請選有效的完成日（需晚於起始日）");return;}
+    const days=Math.round((end-start)/86400000)+1;
+    cpd=Math.max(1,Math.ceil(units.length/days));
+  }
+  plan=[];
+  for(let i=0;i<units.length;i+=cpd){
+    const d=new Date(start.getTime()+ (plan.length)*86400000);
+    plan.push({date:d.toLocaleDateString("sv").slice(0,10), units:units.slice(i,i+cpd)});
+  }
+  planSig="plan_"+order+"_"+units.length+"_"+cpd+"_"+plan[0].date;
+  renderPlan();
+  cloudPush();
+}
+
+function getDone(){try{return new Set(JSON.parse(localStorage.getItem(planSig)||"[]"));}catch(e){return new Set();}}
+function setDone(s){localStorage.setItem(planSig,JSON.stringify([...s]));cloudPush();}
+
+function renderPlan(){
+  const done=getDone();
+  const total=plan.length, last=plan[plan.length-1];
+  document.getElementById("result").style.display="block";
+  const cpd=Math.max(...plan.map(p=>p.units.length));
+  document.getElementById("summary").innerHTML=
+    `共 <b>${plan.reduce((s,p)=>s+p.units.length,0)}</b> 章，分 <b>${total}</b> 天，`+
+    `${pace==="perday"?`每天 <b>${cpd}</b> 章`:`每天約 <b>${cpd}</b> 章`}，`+
+    `<b>${plan[0].date}</b> 起，預計 <b>${last.date}</b> 完成。`;
+  const list=document.getElementById("planList");
+  list.innerHTML="";
+  plan.forEach((p,idx)=>{
+    const isDone=done.has(idx);
+    const wd="日一二三四五六"[new Date(p.date+"T00:00:00").getDay()];
+    const lab=p.units.map(label).join("、");
+    const day=document.createElement("div");day.className="day";
+    day.innerHTML=
+      `<div class="day-h ${isDone?'done':''}">
+        <input type="checkbox" class="chk" ${isDone?'checked':''}>
+        <span class="dnum">第${idx+1}天<br>${p.date.slice(5)} 週${wd}</span>
+        <span class="dch ${isDone?'done':''}">${lab}</span>
+       </div>
+       <div class="day-b"></div>`;
+    const head=day.querySelector(".day-h"), body=day.querySelector(".day-b"), chk=day.querySelector(".chk");
+    chk.onclick=e=>{e.stopPropagation();const s=getDone();chk.checked?s.add(idx):s.delete(idx);setDone(s);renderProgress();head.classList.toggle("done",chk.checked);day.querySelector(".dch").classList.toggle("done",chk.checked);};
+    head.onclick=()=>{if(body.classList.toggle("open")&&!body.dataset.loaded){loadDayDetail(body,p.units);body.dataset.loaded="1";}};
+    list.appendChild(day);
+  });
+  renderProgress();
+}
+function renderProgress(){
+  const done=getDone();
+  document.getElementById("barFill").style.width=(done.size/plan.length*100)+"%";
+}
+
+function loadDayDetail(body,units){
+  body.innerHTML=units.map((u,i)=>{
+    const vid=YTMAP[ytKey(u)];
+    const v=vid?`<a class="vid" href="https://www.youtube.com/watch?v=${vid}" target="_blank">▶ ${label(u)}／第一遍</a>`
+               :`<span class="loading">（第一遍無此章影片）</span>`;
+    return `<div class="cpiece"><div class="vtxt">${label(u)}</div>${v}<div class="vbox" data-k="${u.full}|${u.single?1:u.ch}"></div></div>`;
+  }).join("");
+  body.querySelectorAll(".vbox").forEach(box=>{
+    const [full,ch]=box.dataset.k.split("|");
+    fetchVerses(box, BID[FULL2ABBR[full]], ch);
+  });
+}
+function fetchVerses(box,id,ch){
+  box.innerHTML='<div class="loading">載入經文…</div>';
+  const api=`https://bolls.life/api/CUNP/${id}/${ch}/`;
+  fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(api)}`)
+    .then(r=>r.json())
+    .then(vs=>{box.innerHTML=vs.map(v=>`<div class="verse"><span class="vnum">${v.verse}</span><span>${(v.text||'').replace(/<[^>]+>/g,'')}</span></div>`).join("");})
+    .catch(()=>{box.innerHTML='<div class="loading">經文載入失敗</div>';});
+}
+
+function planText(){
+  return "📖 我的讀經計畫（每日靈糧·中靈版）\n"+plan.map((p,i)=>`${p.date} ${p.units.map(label).join("、")}`).join("\n");
+}
+function copyPlan(){navigator.clipboard.writeText(planText()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1500);});}
+function downloadPlan(){
+  const csv="日期,章節\n"+plan.map(p=>`${p.date},${p.units.map(label).join(" ")}`).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"}));a.download="我的讀經計畫.csv";a.click();
+}
+function resetProgress(){if(confirm("確定清除這份計畫的勾選進度？")){localStorage.removeItem(planSig);renderPlan();cloudPush();}}
+
+// ── 雲端同步（Firebase + Google 登入）──
+function segSet(id,v){const b=document.querySelector('#'+id+' button[data-v="'+v+'"]');if(b)b.click();}
+function currentConfig(){return {order,pace,books:[...selected],start:document.getElementById("startDate").value,cpd:document.getElementById("cpd").value,end:document.getElementById("endDate").value};}
+function applyConfig(c){
+  restoring=true;
+  try{
+    if(c.order)segSet("orderSeg",c.order);
+    if(c.pace)segSet("paceSeg",c.pace);
+    if(Array.isArray(c.books)){selected=new Set(c.books);refreshBooks();}
+    if(c.start)document.getElementById("startDate").value=c.start;
+    if(c.cpd)document.getElementById("cpd").value=c.cpd;
+    if(c.end)document.getElementById("endDate").value=c.end;
+  }finally{restoring=false;}
+}
+function syncDoc(){
+  if(!cloudReady)return null;
+  const db=firebase.firestore();
+  if(syncMode==="google"&&uid)return db.collection("users").doc(uid);
+  if(syncMode==="code"&&syncCode)return db.collection("codes").doc(syncCode);
+  return null;
+}
+async function ensureAnon(){ if(cloudReady&&!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+function genCode(){const s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:6},()=>s[Math.floor(Math.random()*s.length)]).join("");}
+
+function initCloud(){
+  syncCode=localStorage.getItem("syncCode")||"";
+  updateSyncUI();
+  if(!CLOUD_ENABLED||!window.firebase)return;
+  try{firebase.initializeApp(FIREBASE_CONFIG);cloudReady=true;}catch(e){console.warn("Firebase init 失敗",e);return;}
+  firebase.auth().onAuthStateChanged(async u=>{
+    if(u&&!u.isAnonymous){uid=u.uid;syncMode="google";updateSyncUI();try{await pullCloud();}catch(e){console.warn(e);}}
+    else if(u&&u.isAnonymous){uid=u.uid;if(syncCode){syncMode="code";try{await pullCloud();}catch(e){console.warn(e);}}updateSyncUI();}
+    else{uid=null;syncMode="none";updateSyncUI();}
+  });
+  if(syncCode)ensureAnon().catch(e=>console.warn(e));
+}
+function cloudSignIn(){if(!cloudReady){alert("雲端尚未設定");return;}firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>alert("登入失敗："+e.message));}
+function cloudSignOut(){if(cloudReady)firebase.auth().signOut();}
+
+async function createCode(){
+  if(!cloudReady){alert("雲端尚未設定（請先在 planner.html 填入 Firebase 金鑰，見 CLAUDE.md §11）");return;}
+  try{await ensureAnon();}catch(e){alert("無法連線雲端（請確認 Firebase 已啟用匿名登入）");return;}
+  syncCode=genCode();syncMode="code";localStorage.setItem("syncCode",syncCode);
+  cloudPush();updateSyncUI();
+  prompt("你的同步碼（請記下；在其他裝置點「輸入同步碼」打這組就會同步）：",syncCode);
+}
+async function enterCode(){
+  if(!cloudReady){alert("雲端尚未設定");return;}
+  const c=(prompt("輸入同步碼：")||"").trim().toUpperCase();
+  if(!c)return;
+  try{await ensureAnon();}catch(e){alert("無法連線雲端（請確認 Firebase 已啟用匿名登入）");return;}
+  syncCode=c;syncMode="code";localStorage.setItem("syncCode",c);
+  try{await pullCloud();}catch(e){console.warn(e);}
+  updateSyncUI();
+}
+function disableCode(){syncCode="";localStorage.removeItem("syncCode");if(syncMode==="code")syncMode="none";updateSyncUI();}
+
+async function pullCloud(){
+  const ref=syncDoc();if(!ref)return;
+  const snap=await ref.get();
+  if(!snap.exists){if(plan.length)cloudPush();return;}
+  const d=snap.data()||{};
+  if(d.planConfig){applyConfig(d.planConfig);generate();}
+  if(planSig&&d.progress&&d.progress[planSig]){localStorage.setItem(planSig,JSON.stringify(d.progress[planSig]));renderPlan();}
+}
+function cloudPush(){
+  const ref=syncDoc();if(!ref||restoring||!planSig)return;
+  const prog={};prog[planSig]=[...getDone()];
+  ref.set({planConfig:currentConfig(),progress:prog,ts:Date.now()},{merge:true}).catch(e=>console.warn(e));
+}
+function updateSyncUI(){
+  const bar=document.getElementById("syncBar");if(!bar)return;
+  if(!CLOUD_ENABLED){bar.innerHTML='<span class="syncdot"></span>進度存於本機（雲端尚未設定）';return;}
+  let g,c;
+  if(syncMode==="google"&&uid){const u=firebase.auth().currentUser;g='已登入：'+((u&&(u.email||u.displayName))||"Google")+' <button class="syncbtn" onclick="cloudSignOut()">登出</button>';}
+  else g='<button class="syncbtn" onclick="cloudSignIn()">☁ Google 登入</button>';
+  if(syncMode==="code"&&syncCode)c='同步碼：<b style="color:var(--acc3)">'+syncCode+'</b> <button class="syncbtn" onclick="disableCode()">停用</button>';
+  else c='<button class="syncbtn" onclick="createCode()">🔢 建立同步碼</button> <button class="syncbtn" onclick="enterCode()">輸入同步碼</button>';
+  const on=((syncMode==="google"&&uid)||(syncMode==="code"&&syncCode))?' on':'';
+  bar.innerHTML='<span class="syncdot'+on+'"></span>'+g+' ｜ '+c;
+}
+
+boot();
+</script>
+</body>
+</html>

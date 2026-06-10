@@ -97,8 +97,55 @@
 
 ## 9. 尚未做（未來）
 
-- **自訂讀經規劃功能**：讓使用者自選書卷／進度／速度排自己的計畫。主檔 `data/bible_books.json`（全 1189 章）已備妥。
+- **進度雲端同步**：planner.html 目前進度只存瀏覽器 localStorage（換裝置不通）。待接後端同步（見 §11）。
 - **順序預測驗證**：待教會公布 2026 年 7、8 月月曆表後，用 §6 流程比對 `data/reading_order.json` 的預測；
   若持續高命中，即可一次產生整年排程（僅修正局部換書）。
 - 串接 LINE Messaging API 自動推播（目前是手動「複製 LINE 訊息」按鈕）。
 - 速讀（5章／10章）兩軌道的順序驗證：目前只有 5–6 月圖片資料，待累積後比照靈修軌做同樣的順序重建。
+
+## 10. 自訂讀經規劃（planner.html）
+
+讓使用者排自己的讀經計畫。是獨立分頁，頂部導覽與 `index.html` 互通。
+
+- **輸入**：讀經順序（正典創→啟／教會傳統順序 `reading_order.json`）、勾選書卷（快捷：全選／舊約／新約／福音書）、
+  速度（每天幾章 → 算完成日；或 指定完成日 → 算每天幾章）、起始日。
+- **產生**：把選取書卷展開成「一章一單位」清單，依每天章數切成多天、配日期。
+  - 正典順序：照 `bible_books.json` 的 `id` 1→66，每卷 1→N 章。
+  - 教會順序：取 `reading_order.json`，過濾出選取書卷、保留其循環順序。
+- **每天可展開**：顯示經文（同 §8 的 bolls API）＋每章的第一遍影片（查 `yt_map.json`，key＝全名＋章號／單章書卷用書名）。
+- **進度**：每天可勾選完成，存 `localStorage`（key＝`plan_{順序}_{總章}_{每天章}_{起始日}`），含進度條。**換裝置不會同步**（見 §9）。
+- **匯出**：複製計畫文字、下載 CSV。
+- 維護：書卷或章數有變動只會動到 `data/bible_books.json`；計畫邏輯純前端，無需後端。
+  注意 `BOOKS.find(b=>key.startsWith(b.full))` 依賴沒有書卷全名是另一卷的前綴（目前 66 卷成立）。
+
+## 11. 進度雲端同步（Firebase + Google 登入）
+
+planner.html 內建雲端同步，**未填金鑰時自動降級為只存本機**（功能照常）。設定一次即可：
+
+提供兩種同步方式：**Google 登入**（每人一份，最正規）與**同步碼**（免登入，給長輩；輸入同一組 6 碼即互通）。
+
+1. Firebase Console 建專案 → Authentication → Sign-in method → **啟用 Google** 與 **匿名（Anonymous）**。
+   （同步碼用匿名登入在背後撐著，使用者無感；沒啟用匿名，同步碼會無法連線。）
+2. 建立 **Firestore Database**。
+3. 專案設定 → 新增 **Web 應用** → 複製 `firebaseConfig`（apiKey / authDomain / projectId / appId）。
+4. 填進 `planner.html` 的 `FIREBASE_CONFIG`（檔案上方，搜尋「填入」）。
+5. Authentication → Settings → **授權網域** 加入 `589411.github.io`（與測試用 `localhost`）。
+6. Firestore 安全規則：
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{db}/documents {
+       match /users/{uid} {            // Google 登入：只能讀寫自己的
+         allow read, write: if request.auth != null && request.auth.uid == uid;
+       }
+       match /codes/{code} {           // 同步碼：任何（含匿名）登入皆可讀寫
+         allow read, write: if request.auth != null;
+       }
+     }
+   }
+   ```
+- 資料模型：`users/{uid}` 或 `codes/{code}` = `{ planConfig:{order,pace,books,start,cpd,end}, progress:{ [planSig]:[已完成天index] }, ts }`。
+- 流程：Google 登入或輸入同步碼後 `pullCloud()` 還原計畫＋進度；產生計畫或勾選完成時 `cloudPush()` 寫回（`merge:true`）。
+- 同步衝突採最後寫入為準。
+- ⚠️ 同步碼安全性：知道碼的人就能讀寫該筆（碼為隨機 6 碼，純讀經進度，風險低）。Google 路徑才有逐人隔離。
+- 未填金鑰時整個雲端區塊自動停用，只存本機，網站照常運作。
