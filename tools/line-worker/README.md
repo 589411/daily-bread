@@ -20,6 +20,9 @@
    - `GROUP_ID`   = 上面抓到的 groupId
 4. **Settings → Triggers → Cron Triggers**：新增 `0 23 * * *`（UTC）＝ 台灣每天早上 **07:00**。
    （要別的時間就換算：台灣時間 − 8 小時 = UTC。）
+   - ⚠️ **要用「Cron expression」分頁**直接填 `0 23 * * *`。別用「Schedule（Execute Worker every N hours）」模式填 `2300`——那個欄位是「每隔幾小時」、只收 0–23，會報「Hour value must be between 0 and 23」。
+   - 設完看「Estimated upcoming events (UTC)」應只剩每天 23:00 一筆；若同時出現 00:00 等多筆，表示有重複 cron，刪到只剩 `0 23 * * *`。
+   - cron 只在「設定後的下一個 07:00」首次觸發；當天已過 7 點就明早才發。要立即驗證鏈路用 `/?send=1`。
 5. **測試**：開 `https://daily-bread-line.<你的帳號>.workers.dev/` 預覽今天訊息；
    加 `?send=1` 會**實際推一次**到群組，確認沒問題。
 

@@ -30,5 +30,7 @@ webhook.site 取臨時網址 → 設為 LINE Webhook URL → 把 OA 邀進群組
 - **改了程式要按 Deploy**：曾把舊版貼上去忘了更新，`?list=1` 不認得而回到預設預覽——換最新碼再 Deploy 即可。
 - **「There is nothing here yet」**＝請求沒到你的程式：用錯網址（`xxx` 要換成真實帳號子網域，如 `name.<acct>.workers.dev`）、workers.dev 路由被關、或沒 Deploy。
 - **Cron 是 UTC**：台灣時間 − 8 小時。早上 7:00 → `0 23 * * *`。
+- **設 cron 要用「Cron expression」分頁**填 `0 23 * * *`；別用「Schedule（every N hours）」模式填 `2300`（那欄只收 0–23＝每隔幾小時，會報錯）。cron 只在設定後的下一個觸發點才首次執行；要立即驗證用 `/?send=1`。
+- **推播突然停了**：先確認 (a) Cron Trigger 還在；(b) 資料來源（schedule）涵蓋「今天」——資料排到某日就停，過期後 `buildMsg` 回 null 會靜默不發，需先補新資料。
 - **簽章驗證**：設 `LINE_CHANNEL_SECRET` 後，用 HMAC-SHA256 驗 `x-line-signature`，擋偽造 POST。
 - token/secret 一律放 Worker Secret，不進 repo。KV 免費額度（10萬讀、各 1千寫/列/刪、1GB）對「一個小清單」綽綽有餘。

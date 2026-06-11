@@ -187,5 +187,6 @@ GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare
 - **秘密不進 repo**：`LINE_TOKEN`、`GROUP_ID` 放 Cloudflare Worker 的加密環境變數。
 - Worker 執行時即時抓 `daily-bread.launchdock.app/data/*.json` 組訊息（用與前端相同的 `parseRef`/`ytKey` 邏輯），所以排程更新後不必改 Worker。
 - Cron `0 23 * * *`(UTC) = 台灣 07:00。Cron Trigger 不需要 DNS，不影響網域。
+- ⚠️ 設 cron 用 Worker → Settings → Triggers 的 **「Cron expression」分頁**填 `0 23 * * *`；別用「Schedule（every N hours）」填 2300（會報 0–23 錯誤）。cron 只在下一個觸發點才首次跑；要立即測用 `/?send=1`。推播停掉先查：Cron 還在嗎？`schedule.json` 有涵蓋今天嗎（排程到期會靜默不發）？
 - groupId 取得（單群組）：用 webhook.site 抓一次，填進 Secret `GROUP_ID`。
 - **多群組自動註冊**（推薦）：綁 KV（變數名 `GROUPS`）＋設 `LINE_CHANNEL_SECRET`＋把 LINE Webhook URL 指到 Worker 並保持開啟。之後把官方帳號邀進新群組就自動加入名單、離開自動移除；cron 推給名單所有群組（含 `GROUP_ID`）。`?list=1` 看群組數。步驟見 README。
