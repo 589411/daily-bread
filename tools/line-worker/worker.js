@@ -37,6 +37,7 @@ async function buildMsg(){
   const md = `${parseInt(today.slice(5,7))}/${parseInt(today.slice(8,10))}`;
   let msg = `📖 ${md} 每日靈糧\n靈修進度：${lab}`;
   if(vid) msg += `\n📺 https://youtu.be/${vid}`;
+  msg += `\n🗺️ 歷史地圖 https://atlas.launchdock.app/engine/?ref=${encodeURIComponent(d.d)}`;
   msg += `\n（速讀5章：${d.s5}　速讀10章：${d.s10}）\n🔗 ${SITE}/`;
   return msg;
 }
