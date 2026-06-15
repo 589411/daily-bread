@@ -96,13 +96,13 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1><p>陪你讀聖經</p></div>
-  <nav class="nav"><a href="index.html" class="on">每日進度</a><a href="planner.html">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></nav>
+  <nav class="nav"><a href="index.html" class="on" id="navDaily">每日進度</a><a href="#" id="navRead" onclick="showRead(event)">閱讀聖經</a><a href="planner.html">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></nav>
   <div class="hdr-r"><div class="hdr-date" id="hdrDate">—</div><div class="hdr-day" id="hdrDay"></div></div>
 </header>
 <main>
-  <div class="block" style="margin-bottom:14px">
-    <div class="block-hdr"><span class="block-tag">自選經卷</span><span class="block-title">跳到任意書卷‧章（詩篇為篇）</span></div>
+  <div class="block" id="pickerBlock" style="margin-bottom:14px;display:none">
     <div class="block-body" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <span style="font-size:12.5px;color:var(--tx2);font-weight:700">選擇經卷</span>
       <select id="jbBook" onchange="onJbBook()" aria-label="選擇書卷" style="padding:6px 10px;font-size:14px;border-radius:6px"></select>
       <select id="jbCh" aria-label="選擇章或篇" style="padding:6px 10px;font-size:14px;border-radius:6px"></select>
       <button class="btn-copy" onclick="jumpToPicked()" style="background:#4a3a7a;color:#e8c574">前往閱讀</button>
@@ -374,17 +374,24 @@ function jumpTo(abbr,ch){
   document.getElementById("atlasBtn").href=
     "https://atlas.launchdock.app/engine/?ref="+encodeURIComponent(ref);
   renderYT(p); renderBible(p); renderNotes(p);
-  // 自選模式:暫時清掉與「今天」相關的速讀對照,避免混淆
-  document.getElementById("s5").textContent="（自選經卷模式）";
-  document.getElementById("s10").textContent="（自選經卷模式）";
-  ["s5link","s10link","s5vids","s10vids"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML="";});
-  document.querySelectorAll(".sday").forEach(s=>s.classList.remove("on"));
-  if(SCHED[TODAY])document.getElementById("todayBtn").style.display="";
   const blk=document.getElementById("devTitle").closest(".block");
   if(blk)blk.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-boot();
+// 「閱讀聖經」分頁:in-page 模式,隱藏每日進度專屬區,顯示選卷工具列
+function showRead(e){
+  if(e)e.preventDefault();
+  const nd=document.getElementById("navDaily"); if(nd)nd.classList.remove("on");
+  const nr=document.getElementById("navRead"); if(nr)nr.classList.add("on");
+  const sl=document.querySelector(".strip-lbl"); if(sl)sl.style.display="none";
+  const st=document.getElementById("strip"); if(st)st.style.display="none";
+  const r3=document.querySelector(".row3"); if(r3)r3.style.display="none";
+  ["shareBtn","copyBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
+  const pb=document.getElementById("pickerBlock"); if(pb)pb.style.display="";
+  jumpToPicked();
+}
+
+boot().then(()=>{const r=new URLSearchParams(location.search).get("read");if(r==="1")showRead();});
 </script>
 </body>
 </html>
