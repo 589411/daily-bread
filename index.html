@@ -100,6 +100,14 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
   <div class="hdr-r"><div class="hdr-date" id="hdrDate">—</div><div class="hdr-day" id="hdrDay"></div></div>
 </header>
 <main>
+  <div class="block" style="margin-bottom:14px">
+    <div class="block-hdr"><span class="block-tag">自選經卷</span><span class="block-title">跳到任意書卷‧章（詩篇為篇）</span></div>
+    <div class="block-body" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <select id="jbBook" onchange="onJbBook()" aria-label="選擇書卷" style="padding:6px 10px;font-size:14px;border-radius:6px"></select>
+      <select id="jbCh" aria-label="選擇章或篇" style="padding:6px 10px;font-size:14px;border-radius:6px"></select>
+      <button class="btn-copy" onclick="jumpToPicked()" style="background:#4a3a7a;color:#e8c574">前往閱讀</button>
+    </div>
+  </div>
   <div class="strip-lbl"><span id="stripLbl"></span><span id="monthBtns"></span><button class="mbtn" id="todayBtn" onclick="goToday()" style="display:none">📍 回到今天</button></div>
   <div class="strip" id="strip"></div>
 
@@ -166,6 +174,7 @@ async function boot(){
       fetch("data/bible_books.json").then(r=>r.json()).catch(()=>[]),
     ]);
     BB.forEach(b=>BYID[b.id]=b);
+    populateBookPicker();
   }catch(e){
     document.getElementById("bibleArea").innerHTML='<div class="loading">資料載入失敗，請以網頁伺服器或 GitHub Pages 開啟（無法直接用 file:// 開啟）。</div>';
     return;
@@ -330,6 +339,50 @@ function buildMsg(){
 }
 function copyLine(){navigator.clipboard.writeText(buildMsg()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);});}
 function shareLine(){window.open("https://line.me/R/share?text="+encodeURIComponent(buildMsg()),"_blank");}
+
+/* ===== 自選經卷:跳到任意書卷章 ===== */
+function populateBookPicker(){
+  const sel=document.getElementById("jbBook"); if(!sel)return;
+  const books=Object.values(BYID).sort((a,b)=>a.id-b.id);
+  if(!books.length)return;
+  const opt=b=>`<option value="${b.abbr}">${b.full}</option>`;
+  const ot=books.filter(b=>b.id<=39).map(opt).join("");
+  const nt=books.filter(b=>b.id>=40).map(opt).join("");
+  sel.innerHTML=`<optgroup label="舊約">${ot}</optgroup><optgroup label="新約">${nt}</optgroup>`;
+  onJbBook();
+}
+function onJbBook(){
+  const abbr=document.getElementById("jbBook").value;
+  const bk=Object.values(BYID).find(b=>b.abbr===abbr);
+  const sel=document.getElementById("jbCh"); if(!sel)return;
+  if(!bk||bk.chapters<=1){sel.innerHTML='<option value="1">全書</option>';return;}
+  const unit=(abbr==="詩")?"篇":"章";
+  let o=""; for(let i=1;i<=bk.chapters;i++)o+=`<option value="${i}">第${i}${unit}</option>`;
+  sel.innerHTML=o;
+}
+function jumpToPicked(){
+  const abbr=document.getElementById("jbBook").value;
+  const ch=parseInt(document.getElementById("jbCh").value)||1;
+  if(abbr)jumpTo(abbr,ch);
+}
+// 用既有的 renderYT / renderBible / renderNotes 顯示任意一章(重用靈修進度區塊)
+function jumpTo(abbr,ch){
+  const single=!!SINGLE[abbr];
+  const ref=abbr+(single?"":ch);
+  const p=parseRef(ref); if(!p)return;
+  document.getElementById("devTitle").textContent=label(p);
+  document.getElementById("atlasBtn").href=
+    "https://atlas.launchdock.app/engine/?ref="+encodeURIComponent(ref);
+  renderYT(p); renderBible(p); renderNotes(p);
+  // 自選模式:暫時清掉與「今天」相關的速讀對照,避免混淆
+  document.getElementById("s5").textContent="（自選經卷模式）";
+  document.getElementById("s10").textContent="（自選經卷模式）";
+  ["s5link","s10link","s5vids","s10vids"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML="";});
+  document.querySelectorAll(".sday").forEach(s=>s.classList.remove("on"));
+  if(SCHED[TODAY])document.getElementById("todayBtn").style.display="";
+  const blk=document.getElementById("devTitle").closest(".block");
+  if(blk)blk.scrollIntoView({behavior:"smooth",block:"start"});
+}
 
 boot();
 </script>
