@@ -30,3 +30,4 @@ LINE 自動推播已上線（多群組自動註冊 + KV 綁定）。
 ## 已知坑
 - LINE cron 的 Cron expression 要在對的分頁設定（已踩過）。
 - ⚠️ **靈修順序預測（reading_order.json）7 月起失效**：2026 實測命中 5月29/31、6月30/30、但**7月僅 6/31**（教會讀完代下後跳路加福音1-24，預測卻是詩篇107+）。§6／Roadmap#1「可一次產生整年排程」的假設**不成立**，往後每月仍須照教會月曆頁逐日轉錄。
+- ⚠️ **legacy Pages 連續推送會互相取消部署**：短時間內推兩個 commit，後者會把前者還在跑的 deploy 取消，卡成 `status: errored`、線上沒更新（build 其實成功）。對策：**改動併成單一 commit 再推**，或推完等部署綠燈再推下一個；已卡住時用 `gh api --method POST repos/589411/daily-bread/pages/builds` 觸發乾淨重建，再 `curl .../data/schedule.json` 驗證上線。
