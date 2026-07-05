@@ -61,6 +61,10 @@ main{max-width:860px;margin:0 auto;padding:16px}
 .xrefs li{margin:4px 0 4px 18px;line-height:1.7}
 .tip{background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:.88rem}
 .tip b{color:var(--yel)}
+.golinks{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.golinks a{color:var(--acc);text-decoration:none;font-size:.88rem;border:1px solid var(--bdr);border-radius:8px;padding:6px 12px;background:var(--sur2)}
+.daily-lbl{color:var(--yel);font-weight:700;font-size:.9rem;margin:2px 2px 8px}
+#daily .card{border-color:var(--yel)}
 footer{max-width:860px;margin:20px auto 0;padding:0 16px;color:var(--tx2);font-size:.8rem;line-height:1.7}
 .empty{color:var(--tx2);text-align:center;padding:40px 0}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
@@ -81,6 +85,7 @@ footer{max-width:860px;margin:20px auto 0;padding:0 16px;color:var(--tx2);font-s
 </header>
 <main>
   <p class="intro">希伯來文與希臘文裡的諧音雙關、名字詞源、語義場……許多原文的精神是中文譯本無法呈現的。這裡收集這些「翻譯過程中掉落的彩蛋」，每一筆都經過<b>原文逐節比對</b>與人工審核。點開卡片看完整講解。</p>
+  <div id="daily"></div>
   <div id="today" role="button" tabindex="0"></div>
   <div class="filters" id="cats"></div>
   <div class="filters">
@@ -113,7 +118,23 @@ async function boot(){
   ]);
   BOOKS=books;
   DATA=ins.sort((a,b)=>(a.ref.bookNo-b.ref.bookNo)||(a.ref.chapter-b.ref.chapter)||(a.ref.verses[0]-b.ref.verses[0]));
-  buildCats();render();todayEgg();
+  buildCats();render();dailyEgg();todayEgg();openHash();
+}
+// 每日一蛋：依日期輪播一顆精選彩蛋，讓沒有任何想法的人一進來就有東西看
+function dailyEgg(){
+  if(!DATA.length)return;
+  const d=new Date();
+  const seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();
+  const e=DATA[seed%DATA.length];
+  const box=document.getElementById('daily');
+  box.innerHTML='<div class="daily-lbl">🥚 每日一蛋 · '+(d.getMonth()+1)+'/'+d.getDate()+'（每天換一顆）</div>'+
+    card(e).replace('<details class="card" id="'+e.id+'"','<details open class="card" id="daily-'+e.id+'"');
+}
+// 直接連結某顆彩蛋：insight.html#gen.2.7
+function openHash(){
+  const h=decodeURIComponent(location.hash.slice(1)); if(!h)return;
+  const el=document.getElementById(h);
+  if(el){el.open=true;setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),150);}
 }
 function buildCats(){
   const c=document.getElementById('cats');const cnt={};
@@ -158,6 +179,10 @@ function card(e){
       ${cuv}
       <div class="essay">${essay}</div>
       ${xrefs}${tip}
+      <div class="golinks">
+        <a href="index.html?ref=${encodeURIComponent(e.ref.book+e.ref.chapter)}">📖 到 daily-bread 讀 ${refStr(e).split(':')[0]}（經文＋影片）</a>
+        <a href="https://atlas.launchdock.app/engine/?ref=${encodeURIComponent(e.ref.book+e.ref.chapter)}" target="_blank" rel="noopener">🗺️ 看歷史地圖</a>
+      </div>
     </div>
   </details>`;
 }

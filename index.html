@@ -91,6 +91,16 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
 .sc{font-size:12px;color:var(--tx);margin-top:2px;font-weight:600}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc3);color:#06281c;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.show{opacity:1}
+.egg{background:var(--sur2,rgba(255,255,255,.04));border:1px solid var(--acc,#e8c574);border-radius:10px;margin-top:10px;overflow:hidden}
+.egg summary{list-style:none;cursor:pointer;padding:10px 14px}
+.egg summary::-webkit-details-marker{display:none}
+.egg-tag{color:var(--acc,#e8c574);font-weight:700;font-size:12px;margin-right:8px}
+.egg-loss{color:var(--tx2,#999);font-size:12.5px;margin-top:4px;line-height:1.6}
+.egg-body{padding:0 14px 12px;border-top:1px dashed var(--bdr,#444)}
+.egg-body p{line-height:1.85;margin:8px 0;font-size:13.5px}
+.egg-words{margin:10px 0;line-height:2}
+.egg-w{display:inline-block;background:var(--sur,rgba(0,0,0,.2));border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;font-size:13px}
+.egg-w b{font-size:16px;unicode-bidi:isolate}
 </style>
 </head>
 <body>
@@ -124,6 +134,7 @@ main{max-width:820px;margin:0 auto;padding:16px 16px 0}
         <div class="stitle" id="notesTitle"></div>
         <div class="notes-txt" id="notesTxt"></div>
       </div>
+      <div id="eggArea" style="margin-top:14px"></div>
     </div>
   </div>
 
@@ -144,7 +155,7 @@ const ABBR=Object.keys(BID).sort((a,b)=>b.length-a.length);
 const SINGLE={"俄":1,"門":1,"約貳":1,"約參":1,"猶":1};  // 單章書卷
 const WD=["日","一","二","三","四","五","六"];
 
-let SCHED={}, YTMAP={}, SUM={}, BYID={}, curKey="", curMonth="", TODAY="";
+let SCHED={}, YTMAP={}, SUM={}, BYID={}, EGGS=[], curKey="", curMonth="", TODAY="";
 
 // 解析「代下8」「詩119」「約貳」→ {abbr,full,ch,unit,verses}
 function parseRef(s){
@@ -167,11 +178,12 @@ function fmtMD(key){const [y,m,d]=key.split("-");return `${parseInt(m)}/${parseI
 async function boot(){
   try{
     let BB;
-    [SCHED,YTMAP,SUM,BB]=await Promise.all([
+    [SCHED,YTMAP,SUM,BB,EGGS]=await Promise.all([
       fetch("data/schedule.json").then(r=>r.json()),
       fetch("data/yt_map.json").then(r=>r.json()),
       fetch("data/summary.json").then(r=>r.json()).catch(()=>({})),
       fetch("data/bible_books.json").then(r=>r.json()).catch(()=>[]),
+      fetch("insight/data/insights.json").then(r=>r.json()).catch(()=>[]),
     ]);
     BB.forEach(b=>BYID[b.id]=b);
     populateBookPicker();
@@ -227,6 +239,7 @@ function loadDay(k){
   renderYT(p);
   renderBible(p);
   renderNotes(p);
+  renderEgg(p);
   document.getElementById("s5").textContent=data.s5;
   document.getElementById("s10").textContent=data.s10;
   document.getElementById("s5link").innerHTML=readLink(data.s5);
@@ -320,6 +333,24 @@ function renderNotes(p){
   else w.style.display="none";
 }
 
+// 原文彩蛋：本章若有彩蛋，直接顯示可展開卡片（資料：insight/data/insights.json）
+function eggsFor(p){ return p?EGGS.filter(e=>e.ref.bookNo===BID[p.abbr]&&e.ref.chapter===p.ch):[]; }
+function renderEgg(p){
+  const w=document.getElementById("eggArea"); if(!w)return;
+  const hits=eggsFor(p);
+  if(!hits.length){w.innerHTML="";return;}
+  const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  w.innerHTML=hits.map(e=>{
+    const words=(e.words||[]).map(x=>`<span class="egg-w"><b dir="${e.lang==='el'?'ltr':'rtl'}">${esc(x.surface)}</b> <i>${esc(x.translit)}</i>「${esc(x.gloss)}」</span>`).join(" ");
+    const essay=e.essay.split(/\n\n+/).map(t=>`<p>${esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</p>`).join("");
+    return `<details class="egg">
+      <summary><span class="egg-tag">🥚 原文彩蛋</span><b>${esc(e.title)}</b><div class="egg-loss">${esc(e.loss)}</div></summary>
+      <div class="egg-body"><div class="egg-words">${words}</div>${essay}
+      <a class="bg-link" href="insight.html#${e.id}">↗ 更多彩蛋</a></div>
+    </details>`;
+  }).join("");
+}
+
 // 速讀讀經連結（取範圍起點）
 function readLink(range){
   const p=parseRef((range||"").split("-")[0]);
@@ -335,6 +366,8 @@ function buildMsg(){
   if(vid)msg+=`\n📺 https://youtu.be/${vid}`;
   msg+=`\n🗺️ 歷史地圖 https://atlas.launchdock.app/engine/?ref=${encodeURIComponent(data.d)}`;
   msg+=`\n（速讀5章：${data.s5}　速讀10章：${data.s10}）`;
+  const eggs=eggsFor(p);
+  if(eggs.length)msg+=`\n🥚 原文彩蛋：${eggs[0].title}\n${new URL("insight.html#"+eggs[0].id,location.href).href}`;
   return msg;
 }
 function copyLine(){navigator.clipboard.writeText(buildMsg()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);});}
@@ -373,7 +406,7 @@ function jumpTo(abbr,ch){
   document.getElementById("devTitle").textContent=label(p);
   document.getElementById("atlasBtn").href=
     "https://atlas.launchdock.app/engine/?ref="+encodeURIComponent(ref);
-  renderYT(p); renderBible(p); renderNotes(p);
+  renderYT(p); renderBible(p); renderNotes(p); renderEgg(p);
   const blk=document.getElementById("devTitle").closest(".block");
   if(blk)blk.scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -391,7 +424,18 @@ function showRead(e){
   jumpToPicked();
 }
 
-boot().then(()=>{const r=new URLSearchParams(location.search).get("read");if(r==="1")showRead();});
+boot().then(()=>{
+  const q=new URLSearchParams(location.search), ref=q.get("ref");
+  if(q.get("read")==="1"||ref){
+    showRead();
+    if(ref){const p=parseRef(ref);if(p){
+      const sb=document.getElementById("jbBook");if(sb)sb.value=p.abbr;
+      onJbBook();
+      const sc=document.getElementById("jbCh");if(sc)sc.value=p.ch;
+      jumpTo(p.abbr,p.ch);
+    }}
+  }
+});
 </script>
 </body>
 </html>
