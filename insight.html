@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原文彩蛋 · 每日靈糧（中靈版）</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1117">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="每日靈糧">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+<script>
+(function(){var t=localStorage.getItem('theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);var fs=localStorage.getItem('fs')||'';if(fs)document.documentElement.setAttribute('data-fs',fs);})();
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('theme',c);var b=document.getElementById('themeBtn');if(b)b.textContent=c==='light'?'🌙':'☀️';}
+function cycleFont(){var cur=document.documentElement.getAttribute('data-fs')||'';var n=cur===''?'lg':(cur==='lg'?'xl':'');if(n)document.documentElement.setAttribute('data-fs',n);else document.documentElement.removeAttribute('data-fs');localStorage.setItem('fs',n);var b=document.getElementById('fsBtn');if(b)b.textContent=n==='lg'?'字＋':(n==='xl'?'字＋＋':'字');}
+</script>
+<style>
+:root{--bg:#0f1117;--sur:#1a1d27;--sur2:#22263a;--acc:#6c8fff;--acc2:#a78bfa;--acc3:#34d399;--tx:#e8eaf0;--tx2:#9ea3b8;--bdr:#2e3248;--red:#f87171;--yel:#fbbf24}
+html[data-theme=light]{--bg:#f5f6fa;--sur:#ffffff;--sur2:#eef0f7;--acc:#3b5bdb;--acc2:#7048e8;--acc3:#0ca678;--tx:#1a1d27;--tx2:#5c6178;--bdr:#d8dbe8;--red:#e03131;--yel:#b8860b}
+html[data-fs=lg]{font-size:18px}html[data-fs=xl]{font-size:20px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;min-height:100vh;padding-bottom:80px}
+header{background:linear-gradient(135deg,var(--sur),var(--sur2));border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+header h1{font-size:1.15rem;display:flex;align-items:center;gap:8px}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a,nav span{padding:6px 12px;border-radius:8px;font-size:.9rem;text-decoration:none;color:var(--tx2);border:1px solid var(--bdr)}
+nav span{background:var(--acc);color:#fff;border-color:var(--acc)}
+.icon-btn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.9rem;min-width:40px;min-height:36px}
+main{max-width:860px;margin:0 auto;padding:16px}
+.intro{color:var(--tx2);font-size:.92rem;line-height:1.7;margin:6px 2px 14px}
+#today{display:none;background:linear-gradient(135deg,var(--sur2),var(--sur));border:1px solid var(--acc);border-radius:12px;padding:12px 16px;margin-bottom:14px;cursor:pointer}
+#today b{color:var(--acc)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.chip{border:1px solid var(--bdr);background:var(--sur);color:var(--tx2);border-radius:999px;padding:5px 12px;font-size:.85rem;cursor:pointer;user-select:none}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+#q{flex:1;min-width:160px;background:var(--sur);border:1px solid var(--bdr);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:.9rem}
+.count{color:var(--tx2);font-size:.85rem;margin:0 2px 10px}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.card summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card summary::-webkit-details-marker{display:none}
+.card summary:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.refbadge{background:var(--acc);color:#fff;border-radius:6px;padding:2px 8px;font-size:.8rem;white-space:nowrap}
+.cat{background:var(--sur2);border:1px solid var(--bdr);color:var(--acc2);border-radius:6px;padding:2px 8px;font-size:.78rem}
+.conf{border-radius:6px;padding:2px 8px;font-size:.78rem;border:1px solid var(--bdr)}
+.conf.high{color:var(--acc3)}.conf.medium{color:var(--yel)}.conf.low{color:var(--red)}
+.card h3{font-size:1.02rem;line-height:1.5}
+.loss{color:var(--tx2);font-size:.88rem;line-height:1.6}
+.body{padding:0 16px 16px;border-top:1px dashed var(--bdr)}
+.words{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.word{background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;min-width:130px}
+.word .orig{font-size:1.5rem;line-height:1.4;direction:rtl;unicode-bidi:isolate;font-family:'SBL Hebrew','Ezra SIL','Times New Roman',serif}
+.word .orig.el{direction:ltr;font-family:'Gentium Plus','Palatino Linotype',serif;font-size:1.3rem}
+.word .tr{font-style:italic;color:var(--acc);font-size:.92rem}
+.word .gl{color:var(--tx2);font-size:.85rem;margin-top:2px;line-height:1.5}
+.word a{color:var(--tx2);font-size:.75rem;text-decoration:none;border:1px solid var(--bdr);border-radius:5px;padding:1px 5px}
+.cuv{background:var(--sur2);border-left:3px solid var(--acc3);border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;color:var(--tx2);font-size:.92rem}
+.essay p{line-height:1.9;margin:10px 0;font-size:.95rem}
+.xrefs{margin-top:10px;font-size:.88rem;color:var(--tx2)}
+.xrefs li{margin:4px 0 4px 18px;line-height:1.7}
+.tip{background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:.88rem}
+.tip b{color:var(--yel)}
+footer{max-width:860px;margin:20px auto 0;padding:0 16px;color:var(--tx2);font-size:.8rem;line-height:1.7}
+.empty{color:var(--tx2);text-align:center;padding:40px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🥚 原文彩蛋 <small style="color:var(--tx2);font-weight:400;font-size:.78rem">聖經翻譯裡藏的小彩蛋</small></h1>
+  <nav aria-label="頁面導覽">
+    <a href="index.html">📖 今日進度</a>
+    <a href="planner.html">🗓 我的計畫</a>
+    <span aria-current="page">🥚 原文彩蛋</span>
+  </nav>
+  <div style="display:flex;gap:6px">
+    <button id="fsBtn" class="icon-btn" onclick="cycleFont()" aria-label="切換字級">字</button>
+    <button id="themeBtn" class="icon-btn" onclick="toggleTheme()" aria-label="切換深淺色">☀️</button>
+  </div>
+</header>
+<main>
+  <p class="intro">希伯來文與希臘文裡的諧音雙關、名字詞源、語義場……許多原文的精神是中文譯本無法呈現的。這裡收集這些「翻譯過程中掉落的彩蛋」，每一筆都經過<b>原文逐節比對</b>與人工審核。點開卡片看完整講解。</p>
+  <div id="today" role="button" tabindex="0"></div>
+  <div class="filters" id="cats"></div>
+  <div class="filters">
+    <button class="chip on" data-t="all">全部</button>
+    <button class="chip" data-t="ot">舊約</button>
+    <button class="chip" data-t="nt">新約</button>
+    <input id="q" type="search" placeholder="搜尋：書卷、標題、關鍵詞…" aria-label="搜尋彩蛋">
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+<footer>
+  品質說明：每筆條目的原文字串都經程式與 WLC（希伯來）／公認經文 TR（希臘）逐節比對，和合本引文經 CUV 比對，並經高階模型依規格審核（信心度：🟢 穩固共識　🟡 主流看法、學界有討論　🔴 有代表性的少數說）。若發現錯誤歡迎回報。
+</footer>
+<script>
+const CATNAME={paronomasia:'諧音雙關','name-etymology':'名字詞源','semantic-range':'語義場',leitwort:'關鍵字線索',grammar:'文法',
+'wordplay-vision':'異象雙關',acrostic:'離合結構',idiom:'具象慣用語',textual:'一詞多義'};
+const CONFNAME={high:'🟢 共識',medium:'🟡 有討論',low:'🔴 少數說'};
+let DATA=[],BOOKS=[],cat='all',tst='all',q='';
+
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function md(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
+function bookOf(no){return BOOKS.find(b=>b.id===no)||{full:'?',abbr:'?'};}
+function refStr(e){const v=e.ref.verses;const unit=e.ref.bookNo===19?'篇':'';return e.ref.bookFull+(unit?' 第'+e.ref.chapter+unit:' '+e.ref.chapter)+':'+(v.length>1?v[0]+'-'+v[v.length-1]:v[0]);}
+
+async function boot(){
+  const [ins,books]=await Promise.all([
+    fetch('insight/data/insights.json').then(r=>r.json()),
+    fetch('data/bible_books.json').then(r=>r.json())
+  ]);
+  BOOKS=books;
+  DATA=ins.sort((a,b)=>(a.ref.bookNo-b.ref.bookNo)||(a.ref.chapter-b.ref.chapter)||(a.ref.verses[0]-b.ref.verses[0]));
+  buildCats();render();todayEgg();
+}
+function buildCats(){
+  const c=document.getElementById('cats');const cnt={};
+  DATA.forEach(e=>cnt[e.category]=(cnt[e.category]||0)+1);
+  c.innerHTML='<button class="chip on" data-c="all">全部類型</button>'+Object.keys(CATNAME).filter(k=>cnt[k]).map(k=>`<button class="chip" data-c="${k}">${CATNAME[k]} ${cnt[k]}</button>`).join('');
+  c.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{cat=b.dataset.c;c.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));render();});
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tst=b.dataset.t;document.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===b));render();});
+  document.getElementById('q').addEventListener('input',e=>{q=e.target.value.trim();render();});
+}
+function pass(e){
+  if(cat!=='all'&&e.category!==cat)return false;
+  if(tst==='ot'&&e.ref.bookNo>39)return false;
+  if(tst==='nt'&&e.ref.bookNo<=39)return false;
+  if(q){const hay=(e.title+e.loss+e.essay+e.ref.bookFull+e.ref.book+(e.words||[]).map(w=>w.translit+w.gloss).join(' ')).toLowerCase();
+    if(!hay.includes(q.toLowerCase()))return false;}
+  return true;
+}
+function card(e){
+  const el=e.lang==='el';
+  const words=(e.words||[]).map(w=>`<div class="word">
+    <div class="orig ${el?'el':''}">${esc(w.surface)}</div>
+    <div class="tr">${esc(w.translit)}</div>
+    <div class="gl">${esc(w.gloss)}${w.verse?`（${e.ref.chapter}:${w.verse}）`:''}</div>
+    ${w.strongs?`<a href="https://www.blueletterbible.org/lexicon/${w.strongs.toLowerCase()}" target="_blank" rel="noopener">${w.strongs} ↗</a>`:''}
+  </div>`).join('');
+  const essay=e.essay.split(/\n\n+/).map(p=>`<p>${md(p)}</p>`).join('');
+  const xrefs=(e.crossRefs&&e.crossRefs.length)?`<div class="xrefs"><b>貫穿線索</b><ul>${e.crossRefs.map(c=>{const b=bookOf(c.bookNo);return `<li>${b.full} ${c.chapter}:${c.verse} — ${esc(c.note||'')}</li>`;}).join('')}</ul></div>`:'';
+  const tip=e.teachingTip?`<div class="tip"><b>💡 教學建議</b>　${esc(e.teachingTip)}</div>`:'';
+  const cuv=e.cuvQuote?`<div class="cuv">和合本：「${esc(e.cuvQuote)}」</div>`:'';
+  return `<details class="card" id="${e.id}">
+    <summary>
+      <div class="row1">
+        <span class="refbadge">${refStr(e)}</span>
+        <span class="cat">${CATNAME[e.category]||e.category}</span>
+        <span class="conf ${e.confidence}">${CONFNAME[e.confidence]||''}</span>
+      </div>
+      <h3>${esc(e.title)}</h3>
+      <div class="loss">${esc(e.loss)}</div>
+    </summary>
+    <div class="body">
+      <div class="words">${words}</div>
+      ${cuv}
+      <div class="essay">${essay}</div>
+      ${xrefs}${tip}
+    </div>
+  </details>`;
+}
+function render(){
+  const list=DATA.filter(pass);
+  document.getElementById('count').textContent=`共 ${list.length} 筆`;
+  document.getElementById('list').innerHTML=list.length?list.map(card).join(''):'<div class="empty">沒有符合的彩蛋</div>';
+}
+// 今日靈修進度若有對應彩蛋，顯示提示（與 daily-bread 的介面預留）
+async function todayEgg(){
+  try{
+    const sch=await fetch('data/schedule.json').then(r=>r.json());
+    const d=new Date(),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const day=sch[key];if(!day||!day.d)return;
+    // 解析簡稱：取最長匹配的書卷簡稱＋章號
+    const m=BOOKS.slice().sort((a,b)=>b.abbr.length-a.abbr.length).find(b=>day.d.startsWith(b.abbr));
+    if(!m)return;
+    const chap=parseInt(day.d.slice(m.abbr.length),10);
+    const hits=DATA.filter(e=>e.ref.bookNo===m.id&&e.ref.chapter===chap);
+    if(!hits.length)return;
+    const t=document.getElementById('today');
+    t.style.display='block';
+    t.innerHTML=`🎁 今日靈修 <b>${esc(day.d)}</b> 藏著 ${hits.length} 顆彩蛋：${hits.map(h=>esc(h.title)).join('、')}（點我查看）`;
+    const go=()=>{const el=document.getElementById(hits[0].id);if(el){el.open=true;el.scrollIntoView({behavior:'smooth'});}};
+    t.onclick=go;t.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')go();};
+  }catch(_){}
+}
+document.addEventListener('DOMContentLoaded',function(){
+  var tb=document.getElementById('themeBtn');if(tb)tb.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️';
+  var fb=document.getElementById('fsBtn');if(fb){var fs=document.documentElement.getAttribute('data-fs')||'';fb.textContent=fs==='lg'?'字＋':(fs==='xl'?'字＋＋':'字');}
+  boot();
+});
+</script>
+</body>
+</html>

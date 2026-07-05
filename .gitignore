@@ -6,3 +6,4 @@ IMG_*.JPG
 每日靈糧排序.csv
 
 .DS_Store
+insight/tools/.cache/

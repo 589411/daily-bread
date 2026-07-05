@@ -27,6 +27,7 @@
 | `tools/predict_check.py` | **順序預測／驗證器**：依 `reading_order.json` 預測未來靈修、或比對教會新月曆表。見 §6。 |
 | `tools/line-worker/` | LINE 每日自動推播的 Cloudflare Worker（`worker.js`＋部署說明）。見 §13。 |
 | `planner.html` | 自訂讀經規劃（獨立分頁），見 §10。 |
+| `insight.html`＋`insight/` | **原文彩蛋**：中譯無法呈現的希伯來/希臘文亮點（自成一體的小專案），見 §14。 |
 | `manifest.webmanifest`、`sw.js`、`icons/` | PWA：可「加到主畫面」當 App、離線可開，見 §12。 |
 | `index_v1_backup.html` | 舊版備份，勿動。 |
 | `202*.html`、`每日靈糧*.csv` | **舊計畫的原始檔，已被 .gitignore。是不同的讀經次序，請勿當作排程來源**（見 §6）。 |
@@ -190,3 +191,17 @@ GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare
 - ⚠️ 設 cron 用 Worker → Settings → Triggers 的 **「Cron expression」分頁**填 `0 23 * * *`；別用「Schedule（every N hours）」填 2300（會報 0–23 錯誤）。cron 只在下一個觸發點才首次跑；要立即測用 `/?send=1`。推播停掉先查：Cron 還在嗎？`schedule.json` 有涵蓋今天嗎（排程到期會靜默不發）？
 - groupId 取得（單群組）：用 webhook.site 抓一次，填進 Secret `GROUP_ID`。
 - **多群組自動註冊**（推薦）：綁 KV（變數名 `GROUPS`）＋設 `LINE_CHANNEL_SECRET`＋把 LINE Webhook URL 指到 Worker 並保持開啟。之後把官方帳號邀進新群組就自動加入名單、離開自動移除；cron 推給名單所有群組（含 `GROUP_ID`）。`?list=1` 看群組數。步驟見 README。
+
+## 14. 原文彩蛋（insight.html ＋ insight/）
+
+「聖經翻譯裡藏的小彩蛋」：中譯無法呈現的希伯來文／希臘文現象（諧音雙關、名字詞源、
+語義場、離合結構…），獨立小專案，隨時可拆成獨立 repo。
+
+- 資料：`insight/data/insights.json`（26 筆起）。schema、分類法、寫作規則在 `insight/RULES.md`（品質憲法，唯一標準）。
+- 生產：sub-agent 並行生成 → 高階模型審核 → 程式驗證。流程與**踩坑清單**在 `insight/HARNESS.md`——新增條目前必讀，
+  尤其：cuvQuote 不可憑記憶、和合本括號註、詩篇篇題位移、中希分節位移、match 填實際字形。
+- 驗證：改完 `insight/data/` 必跑 `python3 insight/tools/validate_insights.py` → `ALL OK` 才 commit。
+  它會抓 bolls（WLC/TR/CUV）逐節比對每個原文錨點與和合本引文，快取在 `insight/tools/.cache/`（已 gitignore）。
+- 前端：`insight.html`（比照 planner.html：導覽互通、深淺色/字級同 localStorage key）。
+  頁面會讀 `data/schedule.json`，今日靈修章節若有彩蛋自動顯示提示（`todayEgg()`）——
+  未來要整合進 index.html 或 LINE 推播，搬同一段查表邏輯即可（key＝bookNo＋chapter）。

@@ -1,10 +1,11 @@
 // 每日靈糧 Service Worker — 同源檔案 network-first（更新會即時生效、離線也能開）
-const CACHE = 'daily-bread-v1';
+const CACHE = 'daily-bread-v2';
 const SHELL = [
-  './', './index.html', './planner.html', './manifest.webmanifest',
+  './', './index.html', './planner.html', './insight.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png',
   './data/schedule.json', './data/yt_map.json', './data/summary.json',
-  './data/bible_books.json', './data/reading_order.json', './data/split_days.json'
+  './data/bible_books.json', './data/reading_order.json', './data/split_days.json',
+  './insight/data/insights.json'
 ];
 
 self.addEventListener('install', e => {
