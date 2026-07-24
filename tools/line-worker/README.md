@@ -1,6 +1,17 @@
-# LINE 每日自動推播（Cloudflare Worker）
+# LINE 讀經進度（Cloudflare Worker）
 
-每天定時把當天讀經進度推到 LINE 群組。程式碼在 `worker.js`，**token 與 groupId 不在這裡、也不進 repo**，而是放在 Cloudflare Worker 的加密環境變數。
+> **2026-07 起：關鍵字回覆模式（每日主動推播已停用）。**
+> 在群組/聊天輸入含「**每日靈糧**」的訊息 → bot 回覆當天讀經進度。用 LINE **reply**（`replyToken`），
+> **不計入每月訊息額度**，免費方案即可、群組人數再多也零成本。
+>
+> **為何不再每日主動推播**：LINE 免費方案每月僅 200 則，且**推到群組＝按群組人數計費**（4 群 59 人＝每天 59 則，3~4 天就用罄、之後被 LINE 靜默擋掉）。詳見專案 `CLAUDE.md` §13 的「額度坑」。
+>
+> **部署**：本資料夾執行 `wrangler deploy`（已含 `wrangler.toml`，`crons = []` 表示不排程；secrets 不受影響）。
+> 要恢復每日主動推播：升級 LINE 付費方案後，把 `wrangler.toml` 的 `crons` 改回 `["0 23 * * *"]` 再 deploy。
+
+---
+
+以下為原始「每日自動推播」設定說明，保留供未來付費方案恢復時參考。程式碼在 `worker.js`，**token 與 groupId 不在這裡、也不進 repo**，而是放在 Cloudflare Worker 的加密環境變數。
 
 ## 前置：取得 groupId（一次性）
 
