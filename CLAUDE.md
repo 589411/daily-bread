@@ -107,7 +107,10 @@
 - 無障礙／觸控：`:focus-visible` 外框、`prefers-reduced-motion` 關動畫、icon 按鈕有 `aria-label`、按鈕與日期格放大點擊區。
 - 深／淺色：`<html data-theme=light|dark>`；字級：`data-fs=''|lg|xl`。兩者存 localStorage（`theme`／`fs`），切換鈕在 header（兩頁都有）。首次進站深淺色跟隨系統。
 - 經文抓取走 `fetchJson()`：依序試「直連 → allorigins → corsproxy」，全失敗才顯示「重試」鈕＋BibleGateway 備援連結。
-- LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息內容由 `buildMsg()` 產生。
+- LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息由 `currentMsg()` 依模式挑：
+  每日進度用 `buildMsg()`（日期＋靈修＋影片＋地圖＋速讀＋彩蛋）；**「閱讀聖經」任意章用 `buildMsgRef()`**
+  （章名＋影片＋地圖＋彩蛋＋回站連結 `index.html?ref=簡稱章`，收訊人點了直接開同一章）。
+  模式由全域 `READ_REF` 判斷：`jumpTo()` 設值、`loadDay()` 清成 null。
 
 ## 9. Roadmap（已完成／待辦）
 

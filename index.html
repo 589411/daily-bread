@@ -156,6 +156,7 @@ const SINGLE={"俄":1,"門":1,"約貳":1,"約參":1,"猶":1};  // 單章書卷
 const WD=["日","一","二","三","四","五","六"];
 
 let SCHED={}, YTMAP={}, SUM={}, BYID={}, EGGS=[], curKey="", curMonth="", TODAY="";
+let READ_REF=null;   // 「閱讀聖經」模式下目前這一章 {p,ref}；為 null 代表在每日進度模式
 
 // 解析「代下8」「詩119」「約貳」→ {abbr,full,ch,unit,verses}
 function parseRef(s){
@@ -228,7 +229,7 @@ function renderStrip(){
 }
 
 function loadDay(k){
-  curKey=k;
+  curKey=k; READ_REF=null;              // 回到每日進度模式，分享訊息用當天三軌道
   const d=new Date(k+"T00:00:00");
   document.getElementById("hdrDate").textContent=k.replace(/-/g,".");
   document.getElementById("hdrDay").textContent="星期"+WD[d.getDay()];
@@ -370,8 +371,21 @@ function buildMsg(){
   if(eggs.length)msg+=`\n🥚 原文彩蛋：${eggs[0].title}\n${new URL("insight.html#"+eggs[0].id,location.href).href}`;
   return msg;
 }
-function copyLine(){navigator.clipboard.writeText(buildMsg()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);});}
-function shareLine(){window.open("https://line.me/R/share?text="+encodeURIComponent(buildMsg()),"_blank");}
+// 「閱讀聖經」模式：分享目前這一章（無日期／速讀，附回站連結可直接開同一章）
+function buildMsgRef(){
+  const {p,ref}=READ_REF;
+  const vid=YTMAP[ytKey(p)];
+  let msg=`📖 ${label(p)}`;
+  if(vid)msg+=`\n📺 https://youtu.be/${vid}`;
+  msg+=`\n🗺️ 歷史地圖 https://atlas.launchdock.app/engine/?ref=${encodeURIComponent(ref)}`;
+  const eggs=eggsFor(p);
+  if(eggs.length)msg+=`\n🥚 原文彩蛋：${eggs[0].title}\n${new URL("insight.html#"+eggs[0].id,location.href).href}`;
+  msg+=`\n📚 一起讀 ${new URL("index.html?ref="+encodeURIComponent(ref),location.href).href}`;
+  return msg;
+}
+function currentMsg(){ return READ_REF?buildMsgRef():buildMsg(); }
+function copyLine(){navigator.clipboard.writeText(currentMsg()).then(()=>{const t=document.getElementById("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);});}
+function shareLine(){window.open("https://line.me/R/share?text="+encodeURIComponent(currentMsg()),"_blank");}
 
 /* ===== 自選經卷:跳到任意書卷章 ===== */
 function populateBookPicker(){
@@ -403,6 +417,7 @@ function jumpTo(abbr,ch){
   const single=!!SINGLE[abbr];
   const ref=abbr+(single?"":ch);
   const p=parseRef(ref); if(!p)return;
+  READ_REF={p,ref};                       // 讓 LINE 分享／複製改用「這一章」的訊息
   document.getElementById("devTitle").textContent=label(p);
   document.getElementById("atlasBtn").href=
     "https://atlas.launchdock.app/engine/?ref="+encodeURIComponent(ref);
@@ -419,7 +434,6 @@ function showRead(e){
   const sl=document.querySelector(".strip-lbl"); if(sl)sl.style.display="none";
   const st=document.getElementById("strip"); if(st)st.style.display="none";
   const r3=document.querySelector(".row3"); if(r3)r3.style.display="none";
-  ["shareBtn","copyBtn"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
   const pb=document.getElementById("pickerBlock"); if(pb)pb.style.display="";
   jumpToPicked();
 }
