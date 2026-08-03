@@ -8,3 +8,5 @@ IMG_*.JPG
 .DS_Store
 insight/tools/.cache/
 __pycache__/
+tools/line-worker/.wrangler/
+tools/line-worker/node_modules/
