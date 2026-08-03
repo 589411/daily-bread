@@ -26,12 +26,14 @@ const ABBR = Object.keys(BGN).sort((a,b)=>b.length-a.length);
 const SINGLE = {"俄":1,"門":1,"約貳":1,"約參":1,"猶":1};
 
 function parseRef(s){
-  s=(s||"").replace(/[（(][^）)]*[）)]/,"").trim();
-  for(const k of ABBR){ if(s.startsWith(k)){ const ch=parseInt(s.slice(k.length).replace(/[章篇]/g,""))||1; return {abbr:k,full:BGN[k],ch,single:!!SINGLE[k]}; } }
+  s=(s||"").trim();
+  let verses=""; const pv=s.match(/[（(]([^）)]*)[）)]/);
+  if(pv){ verses=pv[1]; s=s.replace(/[（(][^）)]*[）)]/,"").trim(); }
+  for(const k of ABBR){ if(s.startsWith(k)){ const ch=parseInt(s.slice(k.length).replace(/[章篇]/g,""))||1; return {abbr:k,full:BGN[k],ch,verses,single:!!SINGLE[k]}; } }
   return null;
 }
 const ytKey = p => p.full + (p.single?"":p.ch);
-const label = p => p.full + (p.single?"":p.ch + (p.abbr==="詩"?"篇":"章"));
+const label = p => p.full + (p.single?"":p.ch + (p.abbr==="詩"?"篇":"章")) + (p.verses?`（${p.verses}）`:"");
 
 async function buildMsg(){
   const today = new Date(Date.now()+8*3600*1000).toISOString().slice(0,10);

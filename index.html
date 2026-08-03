@@ -172,7 +172,7 @@ function parseRef(s){
   return null;
 }
 function ytKey(p){ return p.full + (p.single?"":p.ch); }   // 對應 yt_map / summary 的 key
-function label(p){ return p.full + (p.single?"":p.ch+p.unit); }
+function label(p){ return p.full + (p.single?"":p.ch+p.unit) + (p.verses?`（${p.verses}）`:""); }
 function fmtMD(key){const [y,m,d]=key.split("-");return `${parseInt(m)}/${parseInt(d)}`;}
 
 async function boot(){

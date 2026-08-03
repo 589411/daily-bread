@@ -7,3 +7,4 @@ IMG_*.JPG
 
 .DS_Store
 insight/tools/.cache/
+__pycache__/
