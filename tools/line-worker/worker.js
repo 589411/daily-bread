@@ -89,38 +89,16 @@ function parseRefStrict(text, books){
   return p;
 }
 
-// 這一章在排程裡是哪幾天的靈修進度（詩119 之類會分多天）
-function schedDays(sched, books, p){
-  const bid = (books.find(b=>b.abbr===p.abbr)||{}).id;
-  const out = [];
-  for(const k of Object.keys(sched)){
-    const q = parseRef(sched[k].d);
-    if(!q) continue;
-    const qid = (books.find(b=>b.abbr===q.abbr)||{}).id;
-    if(qid === bid && (p.single || q.ch === p.ch)) out.push(k);
-  }
-  return out.sort();
-}
-
+// 刻意「不」顯示這章是教會排程的哪一天：經文參照查詢是給人自己讀經用的，
+// 讀的人進度不必跟教會同步，標日期反而會被誤會成「今天該讀這章」。日期只出現在「每日靈糧」那條路。
 async function buildRefMsg(p){
-  const [yt, sched, books, eggs] = await Promise.all([
+  const [yt, books, eggs] = await Promise.all([
     getJSON("/data/yt_map.json"),
-    getJSON("/data/schedule.json"),
     getJSON("/data/bible_books.json"),
     getJSON("/insight/data/insights.json").catch(()=>[]),
   ]);
   const ref = p.abbr + (p.single ? "" : p.ch);
   let msg = `📖 ${p.full}${p.single?"":p.ch + (p.abbr==="詩"?"篇":"章")}`;
-
-  const days = schedDays(sched, books, p);
-  if(days.length){
-    const today = today8();
-    const future = days.filter(k => k >= today);
-    const pick = future[0] || days[days.length-1];
-    const many = days.length > 1 ? `（分 ${days.length} 天）` : "";
-    msg += future.length ? `\n🗓 ${mdOf(pick)} 的靈修進度${many}`
-                         : `\n🗓 ${mdOf(pick)} 已讀過${many}`;
-  }
   const vid = yt[p.full + (p.single?"":p.ch)];
   if(vid) msg += `\n📺 https://youtu.be/${vid}`;
   msg += `\n🗺️ 歷史地圖 https://atlas.launchdock.app/engine/?ref=${encodeURIComponent(ref)}`;

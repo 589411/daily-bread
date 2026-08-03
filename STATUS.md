@@ -35,9 +35,10 @@ LINE **每日自動推播已停用**（免費額度 200 則/月、群組按人�
 - 5–6 月的 s10 仍是舊「連續循環」演算法（未對齊任何固定表）；7 月起才改用循環規則。要不要回頭統一 5–6 月 s10？（目前不影響顯示，暫擱置。）
 
 ## 進度脈絡（新的在上）
-- 2026-08-03 **LINE 擴充「經文參照查詢」**：輸入「彼前5」→ 回該章進度／影片／彩蛋／連結（`quickRef`＋`parseRefStrict`＋`buildRefMsg`）。
+- 2026-08-03 **LINE 擴充「經文參照查詢」**：輸入「彼前5」→ 回該章影片／彩蛋／連結（`quickRef`＋`parseRefStrict`＋`buildRefMsg`）。
   設計取捨：嚴格整則比對（防「約3點見面」誤觸）、不附經文（LINE 單則上限 5000 字，長章會爆）、
-  站上 JSON 走 `cf.cacheTtl=600` 邊緣快取（replyToken 只有 1 分鐘）。**尚未 deploy**。
+  站上 JSON 走 `cf.cacheTtl=600` 邊緣快取（replyToken 只有 1 分鐘）、
+  **不標「這是 X/X 的靈修進度」**（Joseph 實測回饋：查章的人進度不必跟教會同步，標日期會誤導）。
 - 2026-08-03 **「閱讀聖經」任意章也能分享到 LINE**：新增 `buildMsgRef()`／`currentMsg()`／`READ_REF`，
   showRead() 不再隱藏分享鈕；訊息附 `index.html?ref=…` 回站連結。
 - 2026-08-03 **查證 9/21 速讀5章跳躍**：(a) 下載官網 `blccjl.org.tw/bs/` 三張圖（Last-Modified 皆 2026-06-27、無更正註記）
