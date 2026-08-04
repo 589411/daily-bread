@@ -71,10 +71,12 @@ function isOurCard(text){
       || (t.trim().startsWith("📖") && t.includes("\n"));
 }
 /* 關鍵字提問：整則訊息夠短、且含「每日靈糧」才算。
-   長訊息（分享的卡片、聊天中順口提到）都不會觸發——與 isOurCard 形成雙保險。 */
+   長訊息（分享的卡片、聊天中順口提到）都不會觸發——與 isOurCard 形成雙保險。
+   上限 9 字 ＝「每日靈糧」4 字 + 最多 5 字修飾，剛好放得下「請問今天的每日靈糧」，
+   擋得住「我剛看了每日靈糧覺得很棒」(12 字，實測 12 字上限會誤觸)。 */
 const isAskKeyword = text => {
   const t = String(text||"").replace(/[\s　]/g,"");
-  return t.includes("每日靈糧") && t.length <= 12;
+  return t.includes("每日靈糧") && t.length <= 9;
 };
 
 // 第一關：只靠 worker 內建的書卷表判形狀，**不連網**。閒聊訊息在這裡就被擋掉，不浪費請求。
