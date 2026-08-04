@@ -61,6 +61,22 @@ async function buildMsg(){
    非單章書一定要帶章號：單獨一個「書」「傳」「可」不觸發，避免日常用字被當成經文。 */
 const toHalf = s => s.replace(/[０-９]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
 
+/* 「這則訊息是本站產生的卡片嗎？」——網站的『分享到 LINE／複製訊息』貼進群組時，
+   內容本身就含「每日靈糧」四個字，會把 bot 的關鍵字回覆勾起來、變成兩則一樣的訊息。
+   凡帶本站／地圖網址、或以 📖 開頭的多行卡片，一律當成「已經是進度訊息」，不回。 */
+function isOurCard(text){
+  const t = String(text||"");
+  return t.includes("daily-bread.launchdock.app")
+      || t.includes("atlas.launchdock.app")
+      || (t.trim().startsWith("📖") && t.includes("\n"));
+}
+/* 關鍵字提問：整則訊息夠短、且含「每日靈糧」才算。
+   長訊息（分享的卡片、聊天中順口提到）都不會觸發——與 isOurCard 形成雙保險。 */
+const isAskKeyword = text => {
+  const t = String(text||"").replace(/[\s　]/g,"");
+  return t.includes("每日靈糧") && t.length <= 12;
+};
+
 // 第一關：只靠 worker 內建的書卷表判形狀，**不連網**。閒聊訊息在這裡就被擋掉，不浪費請求。
 // 回 {abbr,full,ch,single} 或 null。
 const REF_KEYS = Object.entries(BGN)
@@ -157,7 +173,10 @@ export default {
         // ── 關鍵字自動回覆：輸入含「每日靈糧」→ 回覆當天進度（reply 免費、不計額度）──
         if(ev.type === "message" && ev.message && ev.message.type === "text" && ev.replyToken){
           const text = ev.message.text || "";
-          if(text.includes("每日靈糧")){
+          if(isOurCard(text)){
+            // 網站「分享到 LINE／複製訊息」貼進來的卡片本身就含「每日靈糧」四個字 →
+            // 之前會被當成關鍵字、群組裡出現兩則一樣的訊息。這種訊息一律不回。
+          }else if(isAskKeyword(text)){
             const msg = await buildMsg();
             ctx.waitUntil(linePost(env, "reply", {replyToken:ev.replyToken, messages:[{type:"text", text: msg || "今天沒有排程資料。"}]}));
           }else if(quickRef(text)){
@@ -189,6 +208,19 @@ export default {
     if(url.searchParams.get("list") === "1"){
       const g = await listGroups(env);
       return new Response("目前推播群組數："+g.length, {headers:{"content-type":"text/plain; charset=utf-8"}});
+    }
+    // ?msg=<整則訊息> → 模擬 webhook 的完整判斷：這則訊息 bot 會不會回、回什麼（不發 LINE）
+    const probe = url.searchParams.get("msg");
+    if(probe !== null){
+      const txt = s => new Response(s, {headers:{"content-type":"text/plain; charset=utf-8"}});
+      if(isOurCard(probe))    return txt("🔇 不回覆：這是本站產生的分享卡片");
+      if(isAskKeyword(probe)) return txt("💬 回覆當天進度：\n\n" + (await buildMsg() || "今天沒有排程資料。"));
+      if(quickRef(probe)){
+        const books = await getJSON("/data/bible_books.json");
+        const p = parseRefStrict(probe, books);
+        if(p) return txt("💬 回覆該章：\n\n" + (p.err || await buildRefMsg(p)));
+      }
+      return txt("🔇 不回覆：既不是關鍵字、也不是經文參照");
     }
     // ?ref=彼前5 → 預覽「經文參照查詢」會回什麼（不發 LINE，純測試用）
     const q = url.searchParams.get("ref");
