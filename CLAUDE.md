@@ -205,3 +205,114 @@ GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare
 - 前端：`insight.html`（比照 planner.html：導覽互通、深淺色/字級同 localStorage key）。
   頁面會讀 `data/schedule.json`，今日靈修章節若有彩蛋自動顯示提示（`todayEgg()`）——
   未來要整合進 index.html 或 LINE 推播，搬同一段查表邏輯即可（key＝bookNo＋chapter）。
+
+## 15. 讀經名單管理（admin.html，教會統計會友進度用）
+
+背景：教會希望把紙本讀經登記換成線上、榮譽制（不驗證，相信會友自報），且要能快速交出「誰完成了、完成多少」的名單給教會。設計原則：**不做排名/比較給一般使用者看**（避免落後者的社交壓力），名單只給管理者看，個人只看得到自己的資料。
+
+- **`planner.html` 新增「姓名／小組」欄位**（見 `profileBlock`）：使用者自行填寫真實姓名＋選填小組/區，存 `localStorage`（`pfName`/`pfGroup`）＋隨 `cloudPush()` 一起寫回 Firestore，不論走 Google 登入或同步碼都會收集到（同步碼是給長輩用的免登入路徑，特別要涵蓋到）。
+- **Firestore 文件新增兩個欄位**（`users/{uid}` 與 `codes/{code}` 共用同一份文件結構）：
+  - `profile: {name, group}` —— 使用者自填的姓名/小組。
+  - `latestPlan: {planSig, order, cpd, total, done, pct, start, end, updatedAt}` —— 每次 `cloudPush()` 時，從目前的 `plan`／`getDone()` 算出來的**去正規化**進度摘要（管理者名單不必重新展開整份讀經計畫邏輯就能顯示進度）。
+  - 這兩者都在 `cloudPush()`／`pullCloud()` 一起讀寫，不影響原本的 `progress[planSig]`（勾選陣列）欄位格式。
+- **新增 `admin.html`**：管理者專用頁面，Google 登入後讀取 `users`／`codes` 兩個 collection，彙整成一張表（姓名、小組、進度%、來源、最後更新），可搜尋、可下載 CSV 交給教會。**這個頁面沒有連結在導覽列上**，只有知道網址的人（教會指定管理者）會用到，避免一般會友點進去看到管理介面。
+- **✅ Firestore 安全規則已更新並發佈**（2026-09-06，取代 2026-06-10 建立後從未修改的舊版；Firebase Console 保留版本歷史，隨時可回復）。線上現行規則就是下面這版：
+  ```
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{db}/documents {
+      function isAdmin() {
+        return request.auth != null && request.auth.uid in [
+          "BuVVEegTwEPS50rWyc6cSHwaJzi1"   // 589411@gmail.com（目前唯一管理者）
+        ];
+      }
+      match /users/{uid} {
+        allow get, write: if request.auth != null && request.auth.uid == uid;
+        allow list: if isAdmin();
+      }
+      match /codes/{code} {
+        allow get, write: if request.auth != null;
+        allow list: if isAdmin();
+      }
+    }
+  }
+  ```
+  - **這順便修掉一個既有漏洞**：舊規則 `codes/{code}` 是 `allow read, write: if request.auth != null`，`read` 在 Firestore 規則裡等於 `get`＋`list`——因為條件不看文件內容、只看有沒有登入（連匿名登入都算），任何人在瀏覽器主控台打 `firebase.firestore().collection('codes').get()` 就能**列出所有同步碼使用者的完整進度**，不需要真的知道那組 6 碼。新規則把 `codes` 拆成 `get`（仍然任何登入可讀「單一」已知文件）＋`list`（只有 `isAdmin()` 能列全部），把這個洞補起來。
+  - 要新增管理者：請對方用 Google 登入網站一次（Authentication → 使用者 就會出現他的 UID），把 UID 加進 `isAdmin()` 陣列再發佈即可。或讓他開 `admin.html`，頁面會顯示「你目前還不在管理者名單裡」並秀出自己的 UID。
+
+## 16. 2026-09-06 現況盤點（動任何東西前先看這段）
+
+實際登入 Firebase Console 逐項確認的結果，跟先前文件的假設有出入：
+
+- **後端只有兩塊，而且只有一塊真的在運作**：
+  | 服務 | 位置 | 狀態 |
+  |---|---|---|
+  | 網站託管 | GitHub Pages `589411/daily-bread`，自訂網域 `daily-bread.launchdock.app` | ✅ 運作中 |
+  | LINE 推播 | Cloudflare Worker `daily-bread-line` ＋ KV `daily-bread-groups`（只存群組 ID） | ✅ 運作中，唯一真正在跑的後端 |
+  | 使用者資料 | Firebase `daily-bread-f88ac`（專案編號 258444297032） | ⚠️ 接好但幾乎沒用 |
+  - Cloudflare 帳號下**沒有**任何跟讀經有關的 D1／R2；別再去那邊找進度資料。
+- **⚠️ 最重要的發現：Firestore 資料庫是空的。** 連 `users`／`codes` 集合都不存在，一筆資料都沒寫進去過。
+  Authentication 原本只有 1 個匿名使用者（2026-07-23），**沒有任何 Google 使用者**。
+- **原因已查明並修復**：`daily-bread.launchdock.app` **不在 Firebase 的授權網域清單裡**（清單只有 localhost、
+  `*.firebaseapp.com`、`*.web.app`、`589411.github.io`——後者是還沒換自訂網域時加的）。
+  Firebase SDK 會用授權網域擋下 OAuth，所以**線上正式網址的 Google 登入從上線以來就沒成功過**，
+  只會噴 `auth/unauthorized-domain`。同步碼（匿名登入）不受此限，所以沒人發現。
+  → 2026-09-06 已把 `daily-bread.launchdock.app` 加入授權網域，並實測 Google 登入成功
+  （產生史上第一個 Google 使用者 `589411@gmail.com`）。**日後若再換網域，記得同步加授權網域。**
+- **登入方式**：Google 與匿名都是「已啟用」，這部分一直都沒問題。
+- **對讀經名單功能的意義**：雲端同步的實際採用率是 **0**，所以名單功能不是「在既有資料上加報表」，
+  而是要從零推動會友養成新習慣，且要連過四道摩擦：開網頁 → 產生計畫 → 填姓名 → 每天回來勾選。
+  對照之下 LINE 推播是唯一會友每天真的會碰到的介面，且 Worker 已能回應關鍵字。
+  **「進度改從 LINE 收」是尚未決定但值得認真評估的方向**，`admin.html` 的資料結構與匯出邏輯兩條路都用得上。
+- ⚠️ **最重要的教訓：動手前先 `git fetch`／`git pull`，不要拿本機 clone 當作 repo 的真實狀態。**
+  2026-09-06 這次，本機 clone 停在 `73dcf40`（2026-07），而遠端 `main` 早在 8/3–8/4 就有四個 commit
+  （LINE 關鍵字回覆、經文參照回覆、防迴圈、`wrangler.toml`、`data/schedule.json` 新月份等，共 8 檔 1081 行）。
+  當時只看本機就下結論「線上 Worker 領先 repo 兩個多月、repo 那份是舊的」——**這句話對本機成立，對 GitHub 不成立**，
+  於是白做了一次「從 Cloudflare 反向抓回 worker.js」，那個 commit 事後整個丟棄。
+  本機那個 VM 沒有網路也沒有 GitHub 憑證，`git fetch` 跑不動；這種情況下要嘛請使用者先 fetch，
+  要嘛用瀏覽器去看 `github.com/589411/daily-bread/commits/main` 確認遠端狀態，**不要憑本機臆測**。
+- **尚未上線**：`feature/roster` 分支（`admin.html` ＋ `planner.html` 姓名欄位）已 commit 但**還沒 merge 進 main、沒 push**，
+  所以線上還是舊版 `planner.html`，`admin.html` 也還不存在於正式站。
+- **待辦／未來擴充**：
+  1. 目前只支援單一管理者清單（寫死在規則裡）。長期教會想讓「小組長只看自己組」，需要多加一層——例如另建 `roles/{uid}: {role:'leader', group:'三區'}` 文件，`isAdmin()`/`isLeaderOf(group)` 改成查這個 collection，並讓 `admin.html` 依登入者的 group 過濾名單。這是之後才做，先別為了這個過度設計。
+  2. 「一年讀完聖經」的官方進度目前仍要會友自己在 `planner.html` 用「正典順序＋指定完成日」手動產生，`generate()` 用的是**固定每天章數**（`byend` 只是 `ceil(units/days)`），不是先前討論那種「多數書卷整卷收尾、365天剛好讀完」的智慧分配演算法——如果教會要全體統一用同一份「智慧版」年度計畫，需要另外把那個排法做成 `planner.html` 的第三個 order 選項或一份固定 `data/` 排程檔，目前還沒做。
+
+## 17. 一年讀完整本聖經（`year.html` ＋ `data/year_plan.json`）
+
+教會用來鼓勵會友一年讀完一遍聖經的獨立功能。**與 §6 的教會傳統順序無關**，是另一套排程，兩者並存互不影響。
+
+### 排程規則與產生方式
+- **正典順序創→啟，1189 章一章不漏、不跳段**；不採用教會月曆的分段方式（長章拆兩天那種一律不做）。
+- **365 天讀完**，每天固定 3 或 4 章：271 天 3 章 ＋ 94 天 4 章 = 1189。
+- **盡量讓每一卷剛好在某一天整卷讀完**，不要讀到一半跨天。做法是先以書卷為單位決定各佔幾天，
+  再把「讀 4 章的日子」平均散開（不是全部擠在卷末）。
+- 章數為 **1、2、5** 的書卷無法單獨湊成 3/4 的組合（3a+4b 湊不出這三個數），必須與相鄰書卷併成一個群組收尾，共 8 組：
+  耶利米哀歌＋以西結書、俄巴底亞書＋約拿書＋彌迦書、哈該書＋撒迦利亞書、帖撒羅尼迦前＋後書、
+  腓利門書＋希伯來書、雅各書＋彼得前書、約翰一書＋約翰二書、約翰三書＋猶大書＋啟示錄。
+- **產生器：`tools/gen_year_plan.py`**（讀 `data/bible_books.json` 為唯一真實來源），
+  執行後覆寫 `data/year_plan.json` 並自我驗證：天數 365、章數 1189、順序與正典逐章比對、無重複、
+  每天只能是 3 或 4 章、每章都能對到 `yt_map.json`。輸出 `ALL OK` 才算過。**不要手改 JSON，要改就改產生器重跑。**
+- `data/year_plan.json` 格式：`{name, order, totalDays, totalChapters, generatedAt, note, days:[[key,...] × 365]}`。
+  `key` 與 `yt_map.json` 完全同格式（全名＋章號；單章書卷只有書名），所以查影片是直接 `YTMAP[key]`，不必轉換。
+
+### `year.html`（獨立頁面）
+- **開啟就看到「今天要讀哪幾章」**，不需要設定、不需要登入——這是刻意的，摩擦愈低採用率愈高。
+- 一鍵「今天讀完了」；進度條、目前進度、全書完成度、**本週完成 N/N 天**。
+- **補讀導向**：落後不用重來，今天的進度照樣讀，週末再把前面補回來。頁面會顯示「有 N 天還沒讀完」，
+  清單裡未讀的過去日子標「待補」，可直接勾；另有「只看未讀完」篩選。
+  **刻意不做連續天數（streak）**——那會懲罰「平日忙、假日補」的人，與這個計畫的設計目的相反。
+- 每天可展開看該章經文（bolls CUV，同 §8）與第一遍影片；有整卷收尾的日子會標「讀完《某某書》」。
+- 分享到 LINE、姓名／小組欄位、雲端同步（Google 登入／同步碼），資料結構與 `planner.html` 相同，
+  所以 `admin.html`（§15）讀得到，教會可直接匯出名單。
+- **起始日**：預設 `OFFICIAL_START = "2027-01-01"`（教會統一進度，第 365 天正好是 2027-12-31 讀完啟示錄）。
+  個人想提早開始可自行改，進度會照自己的起始日重算。改起始日要動 `year.html` 裡的這個常數。
+
+### 與 `planner.html` 的關係
+- `planner.html` 最上方有「📅 一年讀完整本聖經（教會推薦）」區塊，按「使用這份計畫」會載入同一份 `year_plan.json`。
+- **兩頁共用同一個進度鍵 `planSig = "year365_<起始日>"`**（localStorage 與 Firestore 皆是），
+  所以在哪一頁勾選都會互通。起始日共用 localStorage 的 `yearStart`。
+- 底下原本的自訂規劃功能（§10）完全保留，只是標題改成「或自訂我的讀經計畫」。
+
+### 導覽
+`index.html`、`planner.html`、`insight.html` 的導覽列都已加入「一年讀經」連結指向 `year.html`。
+

@@ -102,12 +102,35 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1></div>
-  <div class="nav"><a href="index.html">每日進度</a><a href="index.html?read=1">閱讀聖經</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></div>
+  <div class="nav"><a href="index.html">每日進度</a><a href="index.html?read=1">閱讀聖經</a><a href="year.html">一年讀經</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></div>
 </header>
 <main>
   <div class="syncbar" id="syncBar"></div>
+  <div class="block" id="profileBlock">
+    <h2>🙋 讓教會看得到你的名字</h2>
+    <div class="lbl">姓名（教會核對名單用；只有管理者看得到完整名單，其他使用者看不到）</div>
+    <input type="text" id="pfName" placeholder="王小明" style="width:100%;max-width:240px">
+    <div class="lbl">小組／區（選填，之後可由小組長協助填寫）</div>
+    <input type="text" id="pfGroup" placeholder="例如：三區、青年小組" style="width:100%;max-width:240px">
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="qbtn" onclick="saveProfile()">💾 儲存</button>
+      <span id="pfHint" style="font-size:11.5px;color:var(--tx2)"></span>
+    </div>
+  </div>
+  <div class="block" style="border-color:var(--acc3)">
+    <h2>📅 一年讀完整本聖經（教會推薦）</h2>
+    <p style="font-size:12.5px;color:var(--tx2);line-height:1.7">
+      正典順序創→啟，1189 章一章不漏，<b>365 天</b>讀完；每天 3 或 4 章，且<b>多數書卷剛好在某一天整卷讀完</b>，不會讀到一半跨天。
+      這是教會統一的進度，<a href="year.html" style="color:var(--acc)">也有專屬頁面</a>（進度互通）。
+    </p>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span>起始日 <input type="date" id="yearStartDate"></span>
+      <button class="go" style="margin-top:0" onclick="genYearPlan()">使用這份計畫</button>
+    </div>
+  </div>
+
   <div class="block">
-    <h2>🗂️ 規劃我的讀經計畫</h2>
+    <h2>🗂️ 或自訂我的讀經計畫</h2>
 
     <div class="lbl">讀經順序</div>
     <div class="seg" id="orderSeg">
@@ -177,9 +200,11 @@ async function boot(){
   el.innerHTML=BOOKS.map(b=>`<div class="bk on" data-id="${b.id}" onclick="toggleBook(${b.id})">${b.full}</div>`).join("");
   BOOKS.forEach(b=>selected.add(b.id));
   document.getElementById("startDate").value=new Date().toLocaleDateString("sv").slice(0,10);
+  document.getElementById("yearStartDate").value=localStorage.getItem("yearStart")||"2027-01-01";
   // segmented controls
   segInit("orderSeg",v=>order=v);
   segInit("paceSeg",v=>{pace=v;document.getElementById("perdayBox").style.display=v==="perday"?"":"none";document.getElementById("byendBox").style.display=v==="byend"?"":"none";});
+  loadProfileLocal();
   initCloud();
 }
 function segInit(id,cb){
@@ -250,6 +275,32 @@ function generate(){
   cloudPush();
 }
 
+// ── 一年讀完整本聖經（官方排程 data/year_plan.json；與 year.html 共用進度）──
+let YEARPLAN=null;
+async function genYearPlan(){
+  const start=document.getElementById("yearStartDate").value;
+  if(!start){alert("請選起始日");return;}
+  if(!YEARPLAN){
+    try{YEARPLAN=await fetch("data/year_plan.json").then(r=>r.json());}
+    catch(e){alert("讀取年度排程失敗");return;}
+  }
+  localStorage.setItem("yearStart",start);
+  const t0=new Date(start+"T00:00:00").getTime();
+  plan=YEARPLAN.days.map((keys,i)=>({
+    date:new Date(t0+i*86400000).toLocaleDateString("sv").slice(0,10),
+    units:keys.map(k=>{
+      const b=BOOKS.find(x=>k.startsWith(x.full));
+      const rest=k.slice(b.full.length);
+      return {full:b.full, ch:rest?parseInt(rest):1, single:b.chapters===1};
+    })
+  }));
+  order="year365";
+  planSig="year365_"+start;   // 與 year.html 相同，兩頁進度互通
+  renderPlan();
+  cloudPush();
+  document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 function getDone(){try{return new Set(JSON.parse(localStorage.getItem(planSig)||"[]"));}catch(e){return new Set();}}
 function setDone(s){localStorage.setItem(planSig,JSON.stringify([...s]));cloudPush();}
 
@@ -260,7 +311,7 @@ function renderPlan(){
   const cpd=Math.max(...plan.map(p=>p.units.length));
   document.getElementById("summary").innerHTML=
     `共 <b>${plan.reduce((s,p)=>s+p.units.length,0)}</b> 章，分 <b>${total}</b> 天，`+
-    `${pace==="perday"?`每天 <b>${cpd}</b> 章`:`每天約 <b>${cpd}</b> 章`}，`+
+    `${order==="year365"?`每天 <b>3 或 4</b> 章（多數書卷整卷收尾）`:(pace==="perday"?`每天 <b>${cpd}</b> 章`:`每天約 <b>${cpd}</b> 章`)}，`+
     `<b>${plan[0].date}</b> 起，預計 <b>${last.date}</b> 完成。`;
   const list=document.getElementById("planList");
   list.innerHTML="";
@@ -332,6 +383,24 @@ function downloadPlan(){
 }
 function resetProgress(){if(confirm("確定清除這份計畫的勾選進度？")){localStorage.removeItem(planSig);renderPlan();cloudPush();}}
 
+// ── 個人姓名／小組（讓教會統計讀經名單用）──
+function loadProfileLocal(){
+  const n=document.getElementById("pfName"), g=document.getElementById("pfGroup");
+  if(n)n.value=localStorage.getItem("pfName")||"";
+  if(g)g.value=localStorage.getItem("pfGroup")||"";
+}
+function currentProfile(){
+  const n=document.getElementById("pfName"), g=document.getElementById("pfGroup");
+  return {name:(n&&n.value||"").trim(), group:(g&&g.value||"").trim()};
+}
+function saveProfile(){
+  const p=currentProfile();
+  localStorage.setItem("pfName",p.name);
+  localStorage.setItem("pfGroup",p.group);
+  cloudPush();
+  const h=document.getElementById("pfHint");
+  if(h){h.textContent="已儲存"+(CLOUD_ENABLED?"（雲端同步中）":"（僅本機，尚未啟用雲端，教會看不到）");setTimeout(()=>{h.textContent="";},2500);}
+}
 // ── 雲端同步（Firebase + Google 登入）──
 function segSet(id,v){const b=document.querySelector('#'+id+' button[data-v="'+v+'"]');if(b)b.click();}
 function currentConfig(){return {order,pace,books:[...selected],start:document.getElementById("startDate").value,cpd:document.getElementById("cpd").value,end:document.getElementById("endDate").value};}
@@ -392,15 +461,36 @@ function disableCode(){syncCode="";localStorage.removeItem("syncCode");if(syncMo
 async function pullCloud(){
   const ref=syncDoc();if(!ref)return;
   const snap=await ref.get();
-  if(!snap.exists){if(plan.length)cloudPush();return;}
+  if(!snap.exists){if(plan.length||currentProfile().name)cloudPush();return;}
   const d=snap.data()||{};
+  if(d.profile){
+    restoring=true;
+    try{
+      const n=document.getElementById("pfName"), g=document.getElementById("pfGroup");
+      if(n)n.value=d.profile.name||"";
+      if(g)g.value=d.profile.group||"";
+    }finally{restoring=false;}
+  }
   if(d.planConfig){applyConfig(d.planConfig);generate();}
   if(planSig&&d.progress&&d.progress[planSig]){localStorage.setItem(planSig,JSON.stringify(d.progress[planSig]));renderPlan();}
 }
 function cloudPush(){
-  const ref=syncDoc();if(!ref||restoring||!planSig)return;
-  const prog={};prog[planSig]=[...getDone()];
-  ref.set({planConfig:currentConfig(),progress:prog,ts:Date.now()},{merge:true}).catch(e=>console.warn(e));
+  const ref=syncDoc();if(!ref||restoring)return;
+  const payload={profile:currentProfile(),ts:Date.now()};
+  if(planSig){
+    const done=getDone();
+    payload.planConfig=currentConfig();
+    const prog={};prog[planSig]=[...done];
+    payload.progress=prog;
+    payload.latestPlan={
+      planSig, order, cpd:(document.getElementById("cpd")&&document.getElementById("cpd").value)||null,
+      total:plan.length, done:done.size,
+      pct:plan.length?Math.round(done.size/plan.length*1000)/10:0,
+      start:(plan[0]&&plan[0].date)||null, end:(plan[plan.length-1]&&plan[plan.length-1].date)||null,
+      updatedAt:Date.now()
+    };
+  }
+  ref.set(payload,{merge:true}).catch(e=>console.warn(e));
 }
 function updateSyncUI(){
   const bar=document.getElementById("syncBar");if(!bar)return;
