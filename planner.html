@@ -295,7 +295,7 @@ async function genYearPlan(){
     })
   }));
   order="year365";
-  planSig="year365_"+start;   // 與 year.html 相同，兩頁進度互通
+  planSig="year365";   // 固定 key，與 year.html 相同——換起始日不會換掉進度
   renderPlan();
   cloudPush();
   document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
@@ -316,9 +316,13 @@ function renderPlan(){
   const list=document.getElementById("planList");
   list.innerHTML="";
   const todayStr=new Date().toLocaleDateString("sv").slice(0,10);
+  // 一年讀經（year365）用「下一步」（第一個沒打勾的格子）取代「今天」，進度跟日期脫鉤、不怕中途落後；
+  // 自訂配速的計畫仍用真實日期對照今天，因為那本來就是使用者自己排的日曆
+  let nextIdx=-1;
+  if(order==="year365"){for(let i=0;i<plan.length;i++){if(!done.has(i)){nextIdx=i;break;}}if(nextIdx===-1)nextIdx=plan.length;}
   plan.forEach((p,idx)=>{
     const isDone=done.has(idx);
-    const isToday=p.date===todayStr;
+    const isToday=order==="year365"?idx===nextIdx:p.date===todayStr;
     const wd="日一二三四五六"[new Date(p.date+"T00:00:00").getDay()];
     const lab=p.units.map(label).join("、");
     const day=document.createElement("div");day.className="day"+(isToday?" today":"");
@@ -326,7 +330,7 @@ function renderPlan(){
       `<div class="day-h ${isDone?'done':''}">
         <input type="checkbox" class="chk" ${isDone?'checked':''}>
         <span class="dnum">第${idx+1}天<br>${p.date.slice(5)} 週${wd}</span>
-        <span class="dch ${isDone?'done':''}">${lab}${isToday?'<span class="todaybadge">今天</span>':''}</span>
+        <span class="dch ${isDone?'done':''}">${lab}${isToday?`<span class="todaybadge">${order==="year365"?"下一步":"今天"}</span>`:''}</span>
        </div>
        <div class="day-b"></div>`;
     const head=day.querySelector(".day-h"), body=day.querySelector(".day-b"), chk=day.querySelector(".chk");

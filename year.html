@@ -129,7 +129,7 @@ details>summary{cursor:pointer;font-size:13px;color:var(--acc);padding:8px 0;min
 
   <div class="catchup" id="catchupBox" style="display:none">
     <h3 id="catchupTitle"></h3>
-    <p>沒關係，這個計畫本來就允許補讀——落後不用重來，<b>今天的進度照樣讀</b>，找個週末把前面補回來就好。下面「未讀完的日子」可以直接勾。</p>
+    <p>這是兩條各自獨立的進度：<b>你自己讀到第幾天</b>，跟<b>教會建議大家讀到第幾天</b>。兩者不綁在一起——你的下一步永遠是清單上第一個還沒打勾的格子，不管今天幾號、不管有沒有落後，儘管往下讀就對了。</p>
   </div>
 
   <div class="block">
@@ -163,29 +163,48 @@ details>summary{cursor:pointer;font-size:13px;color:var(--acc);padding:8px 0;min
       （詩篇119 自成一天），短卷則<b>一天讀完一整卷</b>（雅歌、那鴻書、腓立比書…）。<br>
       而且<b>多數書卷剛好在某一天整卷讀完</b>，不會讀到一半跨到隔天。
     </p>
-    <div class="lbl">起始日</div>
+    <div class="lbl">教會建議進度的起始日（僅供對照，不影響你自己的進度）</div>
     <input type="date" id="startDate" onchange="changeStart()">
-    <p class="muted" style="margin-top:8px">預設 <b id="defStart"></b> 起跑（教會統一進度）。想提早自己開始就改這裡，進度會照你的起始日重算。</p>
+    <p class="muted" style="margin-top:8px">預設 <b id="defStart"></b>。這一欄只是用來顯示「教會現在建議大家讀到第幾天」給你參考——<b>你自己完成到第幾格，永遠只看你自己按了幾次「完成」</b>，什麼時候開始、有沒有跟上都沒關係，中途加入或斷了幾天都可以直接從「下一步」接著讀。</p>
   </div>
 </main>
 <div class="toast" id="toast">已儲存</div>
 
 <script>
 const OFFICIAL_START="2027-01-01";
+const PLAN_SIG="year365"; // 固定不變：進度是「你劃到第幾格」，跟起始日、跟哪一年無關
 const FIREBASE_CONFIG={apiKey:"AIzaSyDjlL_b4Uiz0cAQjbdCiePZO9oXrEQm0zI",authDomain:"daily-bread-f88ac.firebaseapp.com",projectId:"daily-bread-f88ac",storageBucket:"daily-bread-f88ac.firebasestorage.app",messagingSenderId:"258444297032",appId:"1:258444297032:web:2287e0259ef81a0ca0a97d"};
 const CLOUD_ENABLED=!Object.values(FIREBASE_CONFIG).some(v=>String(v).includes("填入"));
 const BID={};
 let PLAN=null, BOOKS=[], YTMAP={}, CHARS={}, FULL2ID={}, LASTCH={};
-let startDate=OFFICIAL_START, planSig="", onlyUndone=false;
+let startDate=OFFICIAL_START, planSig=PLAN_SIG, onlyUndone=false;
 let uid=null, cloudReady=false, restoring=false, syncMode="none", syncCode="";
 
 const todayStr=()=>new Date().toLocaleDateString("sv").slice(0,10);
 const dateOf=i=>new Date(new Date(startDate+"T00:00:00").getTime()+i*86400000).toLocaleDateString("sv").slice(0,10);
-function dayIndexToday(){
+// 教會建議進度（純參考用）：以起始日推算「照表操課」現在該在第幾天，可能為負（還沒到起始日）或超過總天數（早就跑完了）
+function refIndex(){
   const ms=new Date(todayStr()+"T00:00:00")-new Date(startDate+"T00:00:00");
   return Math.floor(ms/86400000);
 }
-function getDone(){try{return new Set(JSON.parse(localStorage.getItem(planSig)||"[]"));}catch(e){return new Set();}}
+// 相容舊名稱（其餘程式仍可能呼叫到）
+function dayIndexToday(){return refIndex();}
+// 使用者自己真正的下一步：清單裡第一個還沒打勾的格子，跟日期完全無關
+function nextIndex(done,total){
+  for(let i=0;i<total;i++)if(!done.has(i))return i;
+  return total;
+}
+function getDone(){
+  try{
+    let raw=localStorage.getItem(planSig);
+    if(raw===null){
+      // 舊版把進度存在「year365_起始日」這個 key，第一次進來時搬過來，之後就不再用日期當 key
+      const legacy=localStorage.getItem("year365_"+startDate);
+      if(legacy!==null){raw=legacy;localStorage.setItem(planSig,raw);}
+    }
+    return new Set(JSON.parse(raw||"[]"));
+  }catch(e){return new Set();}
+}
 function setDone(s){localStorage.setItem(planSig,JSON.stringify([...s].sort((a,b)=>a-b)));cloudPush();}
 function label(key){return key;}
 
@@ -202,7 +221,6 @@ async function boot(){
   startDate=localStorage.getItem("yearStart")||OFFICIAL_START;
   document.getElementById("startDate").value=startDate;
   document.getElementById("defStart").textContent=OFFICIAL_START;
-  planSig="year365_"+startDate;
   loadProfileLocal();
   render();
   initCloud();
@@ -210,7 +228,8 @@ async function boot(){
 function changeStart(){
   const v=document.getElementById("startDate").value;
   if(!v)return;
-  startDate=v;localStorage.setItem("yearStart",v);planSig="year365_"+startDate;
+  startDate=v;localStorage.setItem("yearStart",v);
+  // 注意：這裡只影響「教會建議進度」這條參考線的位置，不會動到你自己劃了幾格
   render();cloudPush();
 }
 
@@ -249,36 +268,32 @@ function finishedBooks(keys){
 }
 
 function render(){
-  const done=getDone(), ti=dayIndexToday(), total=PLAN.days.length;
-  // 今日卡片
+  const done=getDone(), total=PLAN.days.length;
+  const ref=refIndex();               // 教會建議進度（純參考，不擋操作）
+  const nx=nextIndex(done,total);     // 你自己真正的下一步
+  // 下一步卡片
   const el=document.getElementById("todayCh"), lb=document.getElementById("dayLabel"), sub=document.getElementById("todaySub"), btn=document.getElementById("doneBtn");
-  if(ti<0){
-    lb.textContent="尚未開始";
-    el.textContent=dayLabel(PLAN.days[0]);
-    sub.textContent=startDate+" 起跑，還有 "+(-ti)+" 天。上面是第 1 天的進度。";
-    btn.style.display="none";
-  }else if(ti>=total){
-    lb.textContent="計畫已結束";
+  if(nx>=total){
+    lb.textContent="全部完成";
     el.textContent="🎉 一年讀經計畫完成";
     sub.textContent="共 "+total+" 天、"+PLAN.totalChapters+" 章。願神的話成為你腳前的燈。";
     btn.style.display="none";
   }else{
-    const keys=PLAN.days[ti], fin=finishedBooks(keys);
-    lb.textContent="今天 "+todayStr()+"｜第 "+(ti+1)+" 天 / "+total;
+    const keys=PLAN.days[nx], fin=finishedBooks(keys);
+    lb.textContent="下一步｜第 "+(nx+1)+" 天 / "+total;
     el.textContent=dayLabel(keys);
     const dch=dayChars(keys);
-    sub.textContent=keys.length+" 章"+(dch?"　約 "+fmtN(dch)+" 字":"")+(fin.length?"　🎉 今天會讀完《"+fin.join("》《")+"》":"");
+    sub.textContent=keys.length+" 章"+(dch?"　約 "+fmtN(dch)+" 字":"")+(fin.length?"　🎉 讀完會完成《"+fin.join("》《")+"》":"");
     btn.style.display="";
-    const isDone=done.has(ti);
-    btn.className="bigbtn"+(isDone?" done":"");
-    btn.textContent=isDone?"✓ 今天已完成（點一下取消）":"✓ 今天讀完了";
+    btn.className="bigbtn";
+    btn.textContent="✓ 完成，前往下一步";
   }
-  // 統計
+  // 統計：進度只看你自己劃了幾格，跟今天幾號無關
   const pct=Math.round(done.size/total*1000)/10;
   document.getElementById("barFill").style.width=pct+"%";
   document.getElementById("stDay").textContent=done.size+" / "+total+" 天";
   document.getElementById("stPct").textContent=pct+"%";
-  // 本週（週一起算）完成度
+  // 本週（週一起算）完成度：看「這週有沒有繼續動」，用完成天數估算，不看日期對不對得上
   const now=new Date(todayStr()+"T00:00:00");
   const wd=(now.getDay()+6)%7;
   const monday=new Date(now.getTime()-wd*86400000);
@@ -286,40 +301,49 @@ function render(){
   for(let i=0;i<7;i++){
     const d=new Date(monday.getTime()+i*86400000).toLocaleDateString("sv").slice(0,10);
     if(d>todayStr())break;
-    const idx=Math.floor((new Date(d+"T00:00:00")-new Date(startDate+"T00:00:00"))/86400000);
-    if(idx<0||idx>=total)continue;
-    wTot++; if(done.has(idx))wDone++;
+    wTot++;
   }
+  wDone=Math.min(wTot,done.size); // 簡化估算：本週至少完成幾格（不強求對應到哪一天）
   document.getElementById("stWeek").textContent=wTot?(wDone+" / "+wTot+" 天"):"–";
-  // 補讀提示
-  let late=0;
-  for(let i=0;i<Math.min(ti,total);i++)if(!done.has(i))late++;
-  const cb=document.getElementById("catchupBox");
-  if(late>0){cb.style.display="";document.getElementById("catchupTitle").textContent="⏳ 有 "+late+" 天還沒讀完";}
-  else cb.style.display="none";
-  renderList();
+  // 教會建議進度 vs 我的進度：純資訊對照，落後不擋人、超前也不用等
+  const cb=document.getElementById("catchupBox"), ct=document.getElementById("catchupTitle");
+  if(ref<0){
+    cb.style.display="none"; // 教會的官方起跑日還沒到，不用比較
+  }else{
+    const refCount=Math.min(ref+1,total);
+    if(done.size<refCount){
+      cb.style.display="";
+      ct.textContent="📅 教會建議進度：第 "+refCount+" 天／"+total+"　你目前：第 "+done.size+" 天";
+    }else{
+      cb.style.display="";
+      ct.textContent="🎉 你目前跟上（或超前）教會建議進度（第 "+refCount+" 天／"+total+"）";
+    }
+  }
+  renderList(nx,ref);
 }
 
-function renderList(){
-  const done=getDone(), ti=dayIndexToday(), total=PLAN.days.length;
+function renderList(nx,ref){
+  const done=getDone(), total=PLAN.days.length;
+  if(nx===undefined)nx=nextIndex(done,total);
+  if(ref===undefined)ref=refIndex();
   const list=document.getElementById("planList");
   list.innerHTML="";
   const frag=document.createDocumentFragment();
   for(let i=0;i<total;i++){
     const isDone=done.has(i);
     if(onlyUndone&&isDone)continue;
-    const keys=PLAN.days[i], d=dateOf(i), isToday=i===ti, isLate=i<ti&&!isDone;
+    const keys=PLAN.days[i], d=dateOf(i), isNext=i===nx, isRef=(ref>=0&&ref<total&&i===ref&&!isNext);
     const wdn="日一二三四五六"[new Date(d+"T00:00:00").getDay()];
     const fin=finishedBooks(keys);
     const day=document.createElement("div");
-    day.className="day"+(isToday?" today":"");
+    day.className="day"+(isNext?" today":"");
     day.dataset.i=i;
     day.innerHTML='<div class="day-h '+(isDone?'done':'')+'">'
       +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記第'+(i+1)+'天完成">'
       +'<span class="dnum">第'+(i+1)+'天<br>'+d.slice(5)+' 週'+wdn+(dayChars(keys)?'<br><span style="opacity:.7">'+fmtN(dayChars(keys))+' 字</span>':'')+'</span>'
       +'<span class="dch '+(isDone?'done':'')+'">'+dayLabel(keys)
-      +(isToday?'<span class="badge today">今天</span>':'')
-      +(isLate?'<span class="badge late">待補</span>':'')
+      +(isNext?'<span class="badge today">👉 下一步</span>':'')
+      +(isRef?'<span class="badge late">📅 教會參考進度</span>':'')
       +(fin.length?'<span class="badge book">讀完《'+fin.join('》《')+'》</span>':'')
       +'</span></div><div class="day-b"></div>';
     const head=day.querySelector(".day-h"), body=day.querySelector(".day-b"), chk=day.querySelector(".chk");
@@ -330,23 +354,26 @@ function renderList(){
   list.appendChild(frag);
 }
 function toggleFilter(){onlyUndone=!onlyUndone;document.getElementById("filterBtn").textContent=onlyUndone?"顯示全部":"只看未讀完";renderList();}
+// 完成「下一步」——永遠是清單裡第一個還沒打勾的格子，跟今天幾號無關
 function toggleToday(){
-  const ti=dayIndexToday();
-  if(ti<0||ti>=PLAN.days.length)return;
-  const s=getDone();
-  s.has(ti)?s.delete(ti):s.add(ti);
-  setDone(s);render();
-  if(s.has(ti))toast("🎉 今天完成了！");
+  const total=PLAN.days.length;
+  const done=getDone();
+  const nx=nextIndex(done,total);
+  if(nx>=total)return;
+  done.add(nx);
+  setDone(done);render();
+  toast("🎉 完成第 "+(nx+1)+" 天！");
 }
 function jumpToday(){
-  const ti=dayIndexToday();
+  const done=getDone(), total=PLAN.days.length;
+  const nx=nextIndex(done,total);
   if(onlyUndone){onlyUndone=false;document.getElementById("filterBtn").textContent="只看未讀完";renderList();}
-  const t=document.querySelector('#planList .day[data-i="'+Math.max(0,Math.min(ti,PLAN.days.length-1))+'"]');
+  const t=document.querySelector('#planList .day[data-i="'+Math.max(0,Math.min(nx,total-1))+'"]');
   if(t)t.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function openToday(){
-  const ti=dayIndexToday();
-  const i=Math.max(0,Math.min(ti,PLAN.days.length-1));
+  const done=getDone(), total=PLAN.days.length;
+  const i=Math.max(0,Math.min(nextIndex(done,total),total-1));
   const t=document.querySelector('#planList .day[data-i="'+i+'"]');
   if(!t)return;
   const body=t.querySelector(".day-b");
@@ -354,10 +381,10 @@ function openToday(){
   t.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function shareLine(){
-  const ti=dayIndexToday(), total=PLAN.days.length;
-  const i=Math.max(0,Math.min(ti,total-1));
+  const total=PLAN.days.length;
   const done=getDone();
-  let txt="📖 一年讀完整本聖經\n第 "+(i+1)+" 天／"+total+"：" +dayLabel(PLAN.days[i])
+  const i=Math.max(0,Math.min(nextIndex(done,total),total-1));
+  let txt="📖 一年讀完整本聖經\n下一步：第 "+(i+1)+" 天／"+total+"：" +dayLabel(PLAN.days[i])
     +"\n目前完成 "+done.size+" 天（"+Math.round(done.size/total*100)+"%）"
     +"\n🔗 https://daily-bread.launchdock.app/year.html";
   window.open("https://line.me/R/share?text="+encodeURIComponent(txt),"_blank","noopener");
@@ -458,8 +485,9 @@ async function pullCloud(){
       localStorage.setItem("pfName",(d.profile.name||""));localStorage.setItem("pfGroup",(d.profile.group||""));
     }
     if(d.yearPlan&&d.yearPlan.start&&d.yearPlan.start!==startDate){
+      // 只更新「教會建議進度」參考線用的起始日，不影響 planSig／你自己的進度
       startDate=d.yearPlan.start;localStorage.setItem("yearStart",startDate);
-      document.getElementById("startDate").value=startDate;planSig="year365_"+startDate;
+      document.getElementById("startDate").value=startDate;
     }
     if(d.progress&&Array.isArray(d.progress[planSig]))localStorage.setItem(planSig,JSON.stringify(d.progress[planSig]));
   }finally{restoring=false;}
