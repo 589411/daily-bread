@@ -107,7 +107,10 @@
 - 無障礙／觸控：`:focus-visible` 外框、`prefers-reduced-motion` 關動畫、icon 按鈕有 `aria-label`、按鈕與日期格放大點擊區。
 - 深／淺色：`<html data-theme=light|dark>`；字級：`data-fs=''|lg|xl`。兩者存 localStorage（`theme`／`fs`），切換鈕在 header（兩頁都有）。首次進站深淺色跟隨系統。
 - 經文抓取走 `fetchJson()`：依序試「直連 → allorigins → corsproxy」，全失敗才顯示「重試」鈕＋BibleGateway 備援連結。
-- LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息內容由 `buildMsg()` 產生。
+- LINE 分享：`https://line.me/R/share?text=` 深連結（手機直接開 LINE）；另保留「複製訊息」。訊息由 `currentMsg()` 依模式挑：
+  每日進度用 `buildMsg()`（日期＋靈修＋影片＋地圖＋速讀＋彩蛋）；**「閱讀聖經」任意章用 `buildMsgRef()`**
+  （章名＋影片＋地圖＋彩蛋＋回站連結 `index.html?ref=簡稱章`，收訊人點了直接開同一章）。
+  模式由全域 `READ_REF` 判斷：`jumpTo()` 設值、`loadDay()` 清成 null。
 
 ## 9. Roadmap（已完成／待辦）
 
@@ -180,15 +183,42 @@ planner.html 內建雲端同步，**未填金鑰時自動降級為只存本機**
 - **維護**：若新增了需要離線快取的檔案，加進 `sw.js` 的 `SHELL` 陣列，並把 `CACHE` 版本字串（`daily-bread-v1`）改成 v2…以淘汰舊快取。一般改 HTML／JSON 不必動（network-first 會自動更新）。
 - 圖示：`icons/icon-192.png`、`icon-512.png`（用 Pillow 畫的開書圖，要換可重畫同尺寸覆蓋）。
 
-## 13. LINE 每日自動推播（Cloudflare Worker）
+## 13. LINE 讀經進度（Cloudflare Worker）
 
-GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare Worker ＋ Cron Trigger** 每天呼叫 LINE Messaging API push。
+> **2026-07 起改為「關鍵字回覆」模式，每日主動推播已停用。** 原因見本節末的「⚠️ 額度坑」。
+> - **現行有兩種回覆**（皆走 `replyToken`，**不計入 LINE 每月訊息額度**，不管群組多少人、發幾次都零成本）：
+>   0. **先擋自家卡片**（`isOurCard()`）：訊息帶 `daily-bread.launchdock.app`／`atlas.launchdock.app`，
+>      或以 `📖` 開頭的多行卡片 → **一律不回**。
+>      ⚠️ **踩過的坑（2026-08-04）**：網站「分享到 LINE／複製訊息」貼進群組時，卡片內容本身就含「每日靈糧」四個字，
+>      被關鍵字判斷勾起來 → **群組裡出現兩則一模一樣的訊息**。此關就是為了這個。
+>   1. **關鍵字提問**（`isAskKeyword()`）：整則訊息去空白後**長度 ≤ 9 字**且含「每日靈糧」→ 回覆當天三軌道進度（`buildMsg()`）。
+>      長度上限是上面那個坑的雙保險：聊天中順口提到（「我剛看了每日靈糧覺得很棒…」）不會觸發。
+>   2. 訊息**整則就是經文參照**（如 `彼前5`／`詩119`／`猶`／`彼得前書5`）→ 回覆**那一章**的進度
+>      （`buildRefMsg()`：章名＋第一遍影片＋歷史地圖＋原文彩蛋＋回站連結）。
+>      - ⚠️ **刻意不顯示「這是 X/X 的靈修進度」**：這條路是給人自己讀經用的，讀的人進度不必跟教會同步，
+>        標日期會被誤會成「今天該讀這章」。日期只出現在「每日靈糧」那條路（`buildMsg()`）。曾做過又拿掉，別再加回去。
+>      - 兩關比對：`quickRef()` 只用 worker 內建書卷表判形狀（**不連網**，閒聊訊息零請求就擋掉）；
+>        通過才 fetch `bible_books.json` 由 `parseRefStrict()` 驗章數（超出回「創世記只有 50 章喔。」）。
+>      - **刻意採嚴格比對**：必須以書卷簡稱／全名開頭、其後只剩數字，所以「我們約3點見面」「今天讀彼前5嗎」都不會觸發；
+>        非單章書一定要帶章號（單獨的「書」「傳」「可」不觸發）。**已知殘餘風險：單獨傳一則「約3」會被當成約翰福音3章。**
+>      - 支援全形數字（彼前５）、「彼前第5章」、單章書（猶／俄／門／約貳／約參）。
+>      - 測試不必發 LINE：**`GET /?msg=<整則訊息>`** 會跑完整判斷鏈、告訴你 bot 會不會回、回什麼
+>        （回「🔇 不回覆：…」或「💬 回覆…」）；`GET /?ref=彼前5` 只預覽單章訊息；
+>        `npx wrangler dev --local` 可本機全流程測。**改動觸發規則後一定用 `?msg=` 回歸測這幾種**：
+>        分享卡片、`每日靈糧`、`彼前5`、`早安`、長句中提到「每日靈糧」。
+> - **已停用**：`scheduled()` 每日 push 與 Cron Trigger（`wrangler.toml` 的 `crons = []`）。程式保留，升級付費方案後把 `crons` 改回 `["0 23 * * *"]` 重新 deploy 即可恢復。
+> - 部署：`tools/line-worker/` 執行 `wrangler deploy`（已含 `wrangler.toml`；secrets 不動）。
+
+以下為原「每日自動推播」設計，保留供未來付費方案恢復時參考——GitHub Pages 是靜態網站，無法自己定時發訊息，故用 **Cloudflare Worker ＋ Cron Trigger** 每天呼叫 LINE Messaging API push。
 
 - 程式與部署說明：`tools/line-worker/`（`worker.js`＋`README.md`）。
 - **秘密不進 repo**：`LINE_TOKEN`、`GROUP_ID` 放 Cloudflare Worker 的加密環境變數。
 - Worker 執行時即時抓 `daily-bread.launchdock.app/data/*.json` 組訊息（用與前端相同的 `parseRef`/`ytKey` 邏輯），所以排程更新後不必改 Worker。
 - Cron `0 23 * * *`(UTC) = 台灣 07:00。Cron Trigger 不需要 DNS，不影響網域。
 - ⚠️ 設 cron 用 Worker → Settings → Triggers 的 **「Cron expression」分頁**填 `0 23 * * *`；別用「Schedule（every N hours）」填 2300（會報 0–23 錯誤）。cron 只在下一個觸發點才首次跑；要立即測用 `/?send=1`。推播停掉先查：Cron 還在嗎？`schedule.json` 有涵蓋今天嗎（排程到期會靜默不發）？
+- ⚠️ **額度坑（2026-07 踩爆，導致改用回覆模式的原因）**：LINE 訊息額度是**按「收訊人頭」計費**——推到群組 ＝ 該群組「當下人數」則，**不是每群 1 則**。免費方案每月僅 **200 則**、每月 1 號（JST）重置。4 群共 59 人、每天推一次 ＝ 每天 59 則 → 約 **3.4 天**用罄，之後所有 push 被 LINE 擋（HTTP 429）。而 `scheduled()` 用 `Promise.all` 發完**沒檢查回應**，被擋也**靜默不報錯** → 表面「設定全對卻突然不發」。
+  - **查證指令**（需 worker 的 LINE_TOKEN）：`GET /v2/bot/message/quota`（看上限）、`/v2/bot/message/quota/consumption`（看已用）、`/v2/bot/insight/message/delivery?date=YYYYMMDD`（每日按類型：`apiPush` 主動推、`apiReply` 回覆、`broadcast` 後台群發）。
+  - **關鍵教訓**：群組主動推播在免費 200 額度下數學上不可行（59 人/天 ×30 ≈ 1680/月）；**reply（`replyToken` 回覆）不計入額度** → 故改「關鍵字回覆」。若要恢復每日主動推播，須升級 LINE 付費方案並開啟「超量訊息」。
 - groupId 取得（單群組）：用 webhook.site 抓一次，填進 Secret `GROUP_ID`。
 - **多群組自動註冊**（推薦）：綁 KV（變數名 `GROUPS`）＋設 `LINE_CHANNEL_SECRET`＋把 LINE Webhook URL 指到 Worker 並保持開啟。之後把官方帳號邀進新群組就自動加入名單、離開自動移除；cron 推給名單所有群組（含 `GROUP_ID`）。`?list=1` 看群組數。步驟見 README。
 

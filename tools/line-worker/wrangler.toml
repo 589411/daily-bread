@@ -1,0 +1,17 @@
+# daily-bread-line — LINE「每日靈糧」Worker 部署設定
+# 部署：在本資料夾執行 `wrangler deploy`（需先 `wrangler login`）。
+# secrets（LINE_TOKEN / GROUP_ID / LINE_CHANNEL_SECRET）不在此檔，於 Dashboard 或 `wrangler secret put` 設定，部署不會動到。
+name = "daily-bread-line"
+main = "worker.js"
+compatibility_date = "2026-06-10"
+
+# KV：自動註冊的群組名單（join/leave 維護；目前不主動推播，保留備用）
+kv_namespaces = [
+  { binding = "GROUPS", id = "cafaa4b0e75040608d64e473e7293020" }
+]
+
+# ⚠️ 每日主動推播已停用（LINE 免費 200 則/月、群組按人數計費，撐不住）。
+# 改用 webhook 關鍵字「每日靈糧」自動回覆（reply 免費不計額度）。
+# 若日後升級 LINE 付費方案要恢復每日推播：把下行改成 crons = ["0 23 * * *"] 再 deploy。
+[triggers]
+crons = []
