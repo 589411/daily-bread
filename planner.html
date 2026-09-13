@@ -120,7 +120,7 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
   <div class="block" style="border-color:var(--acc3)">
     <h2>📅 一年讀完整本聖經（教會推薦）</h2>
     <p style="font-size:12.5px;color:var(--tx2);line-height:1.7">
-      正典順序創→啟，1189 章一章不漏，<b>365 天</b>讀完；每天 3 或 4 章，且<b>多數書卷剛好在某一天整卷讀完</b>，不會讀到一半跨天。
+      正典順序創→啟，1189 章一章不漏，<b>365 天</b>讀完。以<b>字數</b>而非章數分配（每天約 2,550 字），所以長章那天只讀 1-2 章、短卷可以一天讀完一整卷，且<b>多數書卷剛好在某一天整卷讀完</b>。
       這是教會統一的進度，<a href="year.html" style="color:var(--acc)">也有專屬頁面</a>（進度互通）。
     </p>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -311,7 +311,7 @@ function renderPlan(){
   const cpd=Math.max(...plan.map(p=>p.units.length));
   document.getElementById("summary").innerHTML=
     `共 <b>${plan.reduce((s,p)=>s+p.units.length,0)}</b> 章，分 <b>${total}</b> 天，`+
-    `${order==="year365"?`每天 <b>3 或 4</b> 章（多數書卷整卷收尾）`:(pace==="perday"?`每天 <b>${cpd}</b> 章`:`每天約 <b>${cpd}</b> 章`)}，`+
+    `${order==="year365"?`每天約 <b>2,550</b> 字（章數浮動，多數書卷整卷收尾）`:(pace==="perday"?`每天 <b>${cpd}</b> 章`:`每天約 <b>${cpd}</b> 章`)}，`+
     `<b>${plan[0].date}</b> 起，預計 <b>${last.date}</b> 完成。`;
   const list=document.getElementById("planList");
   list.innerHTML="";

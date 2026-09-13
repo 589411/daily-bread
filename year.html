@@ -158,7 +158,10 @@ details>summary{cursor:pointer;font-size:13px;color:var(--acc);padding:8px 0;min
     <h2>⚙️ 這份計畫</h2>
     <p class="muted">
       正典順序從<b>創世記到啟示錄</b>，1189 章一章不漏、不跳段，<b>365 天</b>讀完。<br>
-      每天 3 或 4 章（271 天 3 章、94 天 4 章），而且<b>多數書卷剛好在某一天整卷讀完</b>，不會讀到一半跨到隔天。
+      分配依據是<b>字數而不是章數</b>——「一章」差很多：詩篇117篇只有 50 字，詩篇119篇有 3304 字。
+      這份計畫讓<b>每天字數盡量相等</b>（約 2,550 字），章數自然浮動：長章那天可能只讀 1-2 章
+      （詩篇119 自成一天），短卷則<b>一天讀完一整卷</b>（雅歌、那鴻書、腓立比書…）。<br>
+      而且<b>多數書卷剛好在某一天整卷讀完</b>，不會讀到一半跨到隔天。
     </p>
     <div class="lbl">起始日</div>
     <input type="date" id="startDate" onchange="changeStart()">
@@ -172,7 +175,7 @@ const OFFICIAL_START="2027-01-01";
 const FIREBASE_CONFIG={apiKey:"AIzaSyDjlL_b4Uiz0cAQjbdCiePZO9oXrEQm0zI",authDomain:"daily-bread-f88ac.firebaseapp.com",projectId:"daily-bread-f88ac",storageBucket:"daily-bread-f88ac.firebasestorage.app",messagingSenderId:"258444297032",appId:"1:258444297032:web:2287e0259ef81a0ca0a97d"};
 const CLOUD_ENABLED=!Object.values(FIREBASE_CONFIG).some(v=>String(v).includes("填入"));
 const BID={};
-let PLAN=null, BOOKS=[], YTMAP={}, FULL2ID={}, LASTCH={};
+let PLAN=null, BOOKS=[], YTMAP={}, CHARS={}, FULL2ID={}, LASTCH={};
 let startDate=OFFICIAL_START, planSig="", onlyUndone=false;
 let uid=null, cloudReady=false, restoring=false, syncMode="none", syncCode="";
 
@@ -187,11 +190,14 @@ function setDone(s){localStorage.setItem(planSig,JSON.stringify([...s].sort((a,b
 function label(key){return key;}
 
 async function boot(){
-  [PLAN,BOOKS,YTMAP]=await Promise.all([
+  let CH;
+  [PLAN,BOOKS,YTMAP,CH]=await Promise.all([
     fetch("data/year_plan.json").then(r=>r.json()),
     fetch("data/bible_books.json").then(r=>r.json()),
     fetch("data/yt_map.json").then(r=>r.json()),
+    fetch("data/chapter_chars.json").then(r=>r.json()).catch(()=>({chars:{}})),
   ]);
+  CHARS=CH.chars||{};
   BOOKS.forEach(b=>{BID[b.abbr]=b.id;FULL2ID[b.full]=b.id;LASTCH[b.full]=b.chapters;});
   startDate=localStorage.getItem("yearStart")||OFFICIAL_START;
   document.getElementById("startDate").value=startDate;
@@ -231,6 +237,10 @@ function dayLabel(keys){
     return o.full+(o.s===o.e?o.s+unit:o.s+"-"+o.e+unit);
   }).join("；");
 }
+// 一天的字數（chapter_chars.json 缺資料時回 0）
+function dayChars(keys){ return keys.reduce((s,k)=>s+(CHARS[k]||0),0); }
+const fmtN=n=>n.toLocaleString("en-US");
+
 // 這一天有沒有剛好讀完一整卷
 function finishedBooks(keys){
   const out=[];
@@ -256,7 +266,8 @@ function render(){
     const keys=PLAN.days[ti], fin=finishedBooks(keys);
     lb.textContent="今天 "+todayStr()+"｜第 "+(ti+1)+" 天 / "+total;
     el.textContent=dayLabel(keys);
-    sub.textContent=keys.length+" 章"+(fin.length?"　🎉 今天會讀完《"+fin.join("》《")+"》":"");
+    const dch=dayChars(keys);
+    sub.textContent=keys.length+" 章"+(dch?"　約 "+fmtN(dch)+" 字":"")+(fin.length?"　🎉 今天會讀完《"+fin.join("》《")+"》":"");
     btn.style.display="";
     const isDone=done.has(ti);
     btn.className="bigbtn"+(isDone?" done":"");
@@ -305,7 +316,7 @@ function renderList(){
     day.dataset.i=i;
     day.innerHTML='<div class="day-h '+(isDone?'done':'')+'">'
       +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記第'+(i+1)+'天完成">'
-      +'<span class="dnum">第'+(i+1)+'天<br>'+d.slice(5)+' 週'+wdn+'</span>'
+      +'<span class="dnum">第'+(i+1)+'天<br>'+d.slice(5)+' 週'+wdn+(dayChars(keys)?'<br><span style="opacity:.7">'+fmtN(dayChars(keys))+' 字</span>':'')+'</span>'
       +'<span class="dch '+(isDone?'done':'')+'">'+dayLabel(keys)
       +(isToday?'<span class="badge today">今天</span>':'')
       +(isLate?'<span class="badge late">待補</span>':'')
