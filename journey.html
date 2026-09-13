@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>書卷旅程 · 走一步算一步的讀經計畫</title>
+<meta name="theme-color" content="#0f1117">
+<script>
+(function(){var t=localStorage.getItem('theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);})();
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('theme',c);var b=document.getElementById('themeBtn');if(b)b.textContent=c==='light'?'🌙':'☀️';}
+document.addEventListener('DOMContentLoaded',function(){var tb=document.getElementById('themeBtn');if(tb)tb.textContent=document.documentElement.getAttribute('data-theme')==='light'?'🌙':'☀️';});
+</script>
+<style>
+:root{--bg:#0f1117;--sur:#1a1d27;--sur2:#22263a;--acc:#6c8fff;--acc2:#a78bfa;--acc3:#34d399;--tx:#e8eaf0;--tx2:#9ea3b8;--bdr:#2e3248;--gold:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;min-height:100vh;padding-bottom:60px}
+:root[data-theme="light"]{--bg:#f4f6fb;--sur:#ffffff;--sur2:#eef1f8;--acc:#3b5bdb;--acc2:#6741d9;--acc3:#0ca678;--tx:#1b1f2a;--tx2:#5c6378;--bdr:#dde2ec;--gold:#b8860b}
+header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+:root[data-theme="light"] header{background:linear-gradient(135deg,#ffffff,#eef1f8)}
+.logo h1{font-size:15px;font-weight:700}
+.themebtn{background:transparent;border:1.5px solid var(--bdr);color:var(--tx2);border-radius:18px;padding:6px 11px;font-size:13px;cursor:pointer;font-family:inherit;min-height:38px}
+main{max-width:820px;margin:0 auto;padding:16px}
+.block{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;padding:16px}
+.hero{background:linear-gradient(135deg,var(--sur),var(--sur2))}
+h2{font-size:14px;color:var(--acc2);margin-bottom:10px;font-weight:700}
+p.muted{color:var(--tx2);font-size:13px;line-height:1.7;margin-bottom:8px}
+.bar{height:10px;background:var(--bdr);border-radius:6px;overflow:hidden;margin:10px 0 8px}
+.bar>i{display:block;height:100%;background:var(--acc3);width:0;transition:width .3s}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--tx2);margin-top:4px}
+.stat{background:var(--sur2);border-radius:8px;padding:8px 12px;flex:1;min-width:90px;text-align:center}
+.stat b{color:var(--tx);font-size:16px;display:block}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.badge{font-size:11.5px;padding:6px 11px;border-radius:14px;border:1px solid var(--bdr);color:var(--tx2);background:var(--sur2)}
+.badge.on{background:var(--gold);color:#3a2c00;border-color:var(--gold);font-weight:700}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.qbtn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx2);border-radius:6px;padding:9px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:38px}
+.qbtn:hover{border-color:var(--acc);color:var(--acc)}
+.qbtn.pri{background:var(--acc3);color:#06281c;border-color:var(--acc3);font-weight:700}
+select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;min-height:40px}
+.grp-h{font-size:13px;color:var(--acc2);font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
+.grp-h:first-child{margin-top:0}
+.book{border:1px solid var(--bdr);border-radius:9px;margin-bottom:7px;overflow:hidden}
+.book-h{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;min-height:52px}
+.book-h:hover{background:var(--sur2)}
+.book.done .book-h{opacity:.6}
+.chk{width:22px;height:22px;flex-shrink:0;accent-color:var(--acc3)}
+.bname{font-size:14.5px;font-weight:700;flex:1}
+.bname.done{text-decoration:line-through}
+.bmeta{font-size:11px;color:var(--tx2);white-space:nowrap}
+.book-b{display:none;padding:0 12px 14px;border-top:1px solid var(--bdr)}
+.book-b.open{display:block}
+.book-b p{font-size:13px;line-height:1.75;color:var(--tx);padding-top:10px}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--acc2);color:#fff;margin-left:4px}
+.tag.short{background:var(--acc3);color:#06281c}
+.suggest{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:10px;padding:12px;margin-bottom:14px;display:none}
+.suggest b{color:var(--acc3)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><h1>📚 書卷旅程</h1></div>
+  <button id="themeBtn" class="themebtn" onclick="toggleTheme()" aria-label="切換深淺色主題">☀️</button>
+</header>
+<main>
+  <div class="block hero">
+    <h2>走一步算一步，不用一年讀完</h2>
+    <p class="muted">這不是限時的讀經計畫，是一份陪你走完 66 卷書的地圖。想快想慢都可以，中間停多久都能接著走——進度只看你「完成了幾卷」，跟時間無關。</p>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="stats">
+      <div class="stat"><b id="stDone">0/66</b>已完成書卷</div>
+      <div class="stat"><b id="stPct">0%</b>整體進度</div>
+      <div class="stat"><b id="stChars">0</b>已讀約幾字</div>
+    </div>
+    <div class="badges" id="badges"></div>
+  </div>
+
+  <div class="suggest" id="suggestBox">
+    <p><b>💡 讀不下去了？</b> 換一本試試——<span id="suggestText"></span></p>
+  </div>
+
+  <div class="block">
+    <h2>選一種順眼的排列方式</h2>
+    <select id="orderSel" onchange="render()">
+      <option value="canon">正典順序（創世記→啟示錄）</option>
+      <option value="category">文體分類（律法書／歷史書／智慧書／先知書／新約）</option>
+      <option value="chron">概略編年順序（依寫作／發生年代排列）</option>
+      <option value="easy">易讀優先（字數由短到長）</option>
+    </select>
+    <div class="toolbar">
+      <button class="qbtn pri" onclick="suggestEasy()">🎯 幫我挑一本現在能完成的</button>
+      <button class="qbtn" onclick="exportProgress()">⬇ 匯出我的進度</button>
+      <button class="qbtn" onclick="document.getElementById('importFile').click()">⬆ 匯入進度</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importProgress(event)">
+    </div>
+  </div>
+
+  <div class="block">
+    <div id="bookList"></div>
+  </div>
+</main>
+
+<script>
+const fmtN=n=>n.toLocaleString("en-US");
+let DATA=null, DONE=new Set();
+const STORE_KEY="journeyDoneBooks"; // 存 book id 陣列
+
+function loadDone(){try{return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]"));}catch(e){return new Set();}}
+function saveDone(){localStorage.setItem(STORE_KEY,JSON.stringify([...DONE]));}
+
+async function boot(){
+  DATA=await fetch("data/book_journey.json").then(r=>r.json());
+  DONE=loadDone();
+  render();
+}
+
+function sortedBooks(order){
+  const books=DATA.books.slice();
+  if(order==="canon")return books.sort((a,b)=>a.id-b.id);
+  if(order==="chron")return books.sort((a,b)=>a.chronOrder-b.chronOrder);
+  if(order==="easy")return books.sort((a,b)=>a.totalChars-b.totalChars);
+  return books.sort((a,b)=>a.id-b.id); // category 排序另外處理分組
+}
+
+function render(){
+  const order=document.getElementById("orderSel").value;
+  const total=DATA.books.length, doneCount=DONE.size;
+  document.getElementById("barFill").style.width=(doneCount/total*100)+"%";
+  document.getElementById("stDone").textContent=doneCount+"/"+total;
+  document.getElementById("stPct").textContent=Math.round(doneCount/total*100)+"%";
+  const doneChars=DATA.books.filter(b=>DONE.has(b.id)).reduce((s,b)=>s+b.totalChars,0);
+  document.getElementById("stChars").textContent=fmtN(doneChars);
+  renderBadges();
+
+  const list=document.getElementById("bookList");
+  list.innerHTML="";
+  const frag=document.createDocumentFragment();
+
+  if(order==="category"){
+    DATA.categories.forEach(cat=>{
+      const h=document.createElement("div");h.className="grp-h";h.textContent=cat;frag.appendChild(h);
+      DATA.books.filter(b=>b.category===cat).sort((a,b)=>a.id-b.id).forEach(b=>frag.appendChild(bookRow(b)));
+    });
+  }else{
+    sortedBooks(order).forEach(b=>frag.appendChild(bookRow(b)));
+  }
+  list.appendChild(frag);
+}
+
+function shortTag(b){
+  // 全書字數在最短 15 名內，標示「易讀」
+  const sorted=DATA.books.slice().sort((a,b2)=>a.totalChars-b2.totalChars);
+  const idx=sorted.findIndex(x=>x.id===b.id);
+  return idx<15;
+}
+
+function bookRow(b){
+  const isDone=DONE.has(b.id);
+  const easy=shortTag(b);
+  const div=document.createElement("div");
+  div.className="book"+(isDone?" done":"");
+  div.innerHTML='<div class="book-h">'
+    +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記'+b.full+'完成">'
+    +'<span class="bname'+(isDone?' done':'')+'">'+b.full+(easy?'<span class="tag short">易讀</span>':'')+'</span>'
+    +'<span class="bmeta">'+b.chapters+'章・約'+fmtN(b.totalChars)+'字</span>'
+    +'</div><div class="book-b"><p>'+b.intro+'</p></div>';
+  const chk=div.querySelector(".chk"), head=div.querySelector(".book-h"), body=div.querySelector(".book-b");
+  chk.onclick=e=>{
+    e.stopPropagation();
+    chk.checked?DONE.add(b.id):DONE.delete(b.id);
+    saveDone();render();
+  };
+  head.onclick=()=>body.classList.toggle("open");
+  return div;
+}
+
+// ── 成就徽章（依累積完成度計算，純鼓勵，沒有排名）──
+function renderBadges(){
+  const doneBooks=DATA.books.filter(b=>DONE.has(b.id));
+  const total=DATA.books.length;
+  const easyIds=new Set(DATA.books.slice().sort((a,b)=>a.totalChars-b.totalChars).slice(0,10).map(b=>b.id));
+  const badgeDefs=[
+    {key:"first", label:"🚀 跨出第一步", on: doneBooks.length>=1},
+    {key:"ten", label:"📖 讀完 10 卷", on: doneBooks.length>=10},
+    {key:"half", label:"🌗 過半（33 卷）", on: doneBooks.length>=33},
+    {key:"easy10", label:"🌱 短卷收集家", on: [...easyIds].every(id=>DONE.has(id))},
+    {key:"law", label:"📜 律法書通關", on: DATA.categories.includes("律法書")&&DATA.books.filter(b=>b.category==="律法書").every(b=>DONE.has(b.id))},
+    {key:"hist", label:"🏛 歷史書通關", on: DATA.books.filter(b=>b.category==="歷史書").every(b=>DONE.has(b.id))},
+    {key:"wisdom", label:"🕊 智慧書通關", on: DATA.books.filter(b=>b.category==="智慧書").every(b=>DONE.has(b.id))},
+    {key:"proph", label:"🔥 先知書通關", on: DATA.books.filter(b=>b.category==="先知書").every(b=>DONE.has(b.id))},
+    {key:"nt", label:"✝️ 新約通關", on: DATA.books.filter(b=>b.category==="新約").every(b=>DONE.has(b.id))},
+    {key:"all", label:"🏆 全本聖經完成", on: doneBooks.length>=total},
+  ];
+  const box=document.getElementById("badges");
+  box.innerHTML=badgeDefs.map(d=>'<span class="badge'+(d.on?' on':'')+'">'+d.label+'</span>').join("");
+}
+
+// ── 卡關時：推薦目前還沒讀、字數最少的一卷 ──
+function suggestEasy(){
+  const undone=DATA.books.filter(b=>!DONE.has(b.id)).sort((a,b)=>a.totalChars-b.totalChars);
+  const box=document.getElementById("suggestBox"), txt=document.getElementById("suggestText");
+  if(!undone.length){box.style.display="none";return;}
+  const b=undone[0];
+  txt.innerHTML='<b>'+b.full+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，現在很適合先完成它。';
+  box.style.display="";
+  // 順便捲到那一本
+  document.getElementById("orderSel").value="easy";render();
+  setTimeout(()=>{
+    const rows=[...document.querySelectorAll("#bookList .book")];
+    const idx=DATA.books.slice().sort((a,c)=>a.totalChars-c.totalChars).findIndex(x=>x.id===b.id);
+    if(rows[idx])rows[idx].scrollIntoView({behavior:"smooth",block:"center"});
+  },50);
+}
+
+// ── 進度備份（沒有雲端同步，先用檔案匯出匯入）──
+function exportProgress(){
+  const blob=new Blob([JSON.stringify({done:[...DONE],exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="書卷旅程進度.json";a.click();
+}
+function importProgress(ev){
+  const file=ev.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const d=JSON.parse(reader.result);
+      if(Array.isArray(d.done)){DONE=new Set(d.done);saveDone();render();alert("匯入完成");}
+    }catch(e){alert("檔案格式不對");}
+  };
+  reader.readAsText(file);
+}
+
+boot();
+</script>
+</body>
+</html>
