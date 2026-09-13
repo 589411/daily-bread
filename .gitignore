@@ -10,3 +10,6 @@ insight/tools/.cache/
 __pycache__/
 tools/line-worker/.wrangler/
 tools/line-worker/node_modules/
+
+# 版權著作，僅供個人使用，不進版本控制（大衛鮑森《舊約縱覽》系列 epub 與轉檔）
+大衛鮑森聖經縱覽/
