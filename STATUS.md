@@ -16,11 +16,8 @@ LINE **每日自動推播已停用**（免費額度 200 則/月、群組按人�
 - ✅ **A1 已完成（2026-09-14）**：全部 push 上線（`2c341c6`），Pages 已 built，線上 journey.html 含群組功能。
   測試 38/38 全過（修了 `test_journey_groups.py`：有網路時真 Firebase SDK 會蓋掉假 Firestore，已在測試擋 CDN）。
   本機跑測試需 playwright（可用 venv：`python3 -m venv pw && pw/bin/pip install playwright && pw/bin/playwright install chromium`）。
-- **A2. 貼 Firestore 規則。** Console → Firestore → 規則 → 貼 repo 根目錄的 `firestore.rules`，
-  **先把裡面的 `ADMIN_UID` 換成自己的 uid**（CLAUDE.md §15 記載為 `BuVVEegTwEPS50rWyc6cSHwaJzi1`）。
-  ⚠️ 2026-09-14 嘗試用 Chrome 代貼失敗：瀏覽器 /u/0（JC）、/u/1 帳號都看不到 `daily-bread-f88ac` 專案，須用 589411@gmail.com 登入 Console。
-  ⚠️ 不換 → `admin.html` 整個看不到資料；不貼 → 群組功能全部 `permission-denied`。
-  ⚠️ **不要照貼 CLAUDE.md §11 裡那份舊規則**，那份沒有 `groups` 區段（§11 已加警告標註）。
+- ✅ **A2 已完成（2026-09-14 21:24）**：用 Chrome（589411 帳號那個 Chrome）把 `firestore.rules`（ADMIN_UID＝`BuVVEegTwEPS50rWyc6cSHwaJzi1`）發佈到 Console。
+  users/codes 行為與 9/6 版相同，只多了 `groups` 區段；要回復可在 Console 規則歷史選 9/6 版。
 - **A3. 真人實測一次**（我測不到，需要真實 Google 帳號）：
   登入 → 建立群組 → 確認已讀的書自動點亮 → 邀請碼給一個人試加入。
 - ⚠️ **git 鎖檔**：若看到 `Unable to create '.git/index.lock': File exists`，
