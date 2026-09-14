@@ -185,6 +185,59 @@ with sync_playwright() as p:
     st = page.locator("#suggestText").inner_text()
     check("推薦優先補群組空白", "群組還沒有人讀過" in st, st[:60])
 
+    # 9b. 「我正在讀」預約：淺色、不顯示是誰、上限 2 卷、讀完自動清掉、別人的標記影響推薦
+    OBAD = next(b for b in data["books"] if b["full"] == "俄巴底亞書")
+    J2 = next(b for b in data["books"] if b["full"] == "約翰二書")
+    J3 = next(b for b in data["books"] if b["full"] == "約翰三書")
+    page.evaluate(f"setReading({NAHUM['id']}, true)")
+    page.wait_for_timeout(500)
+    store = page.evaluate("window.__STORE__")
+    rd = store[f"groups/{gid}"].get("reading", {})
+    exp = (rd.get(f"b{NAHUM['id']}") or {}).get("U1")
+    check("標記正在讀寫入群組 reading 巢狀欄位", isinstance(exp, (int, float)), rd)
+    days = round((exp - page.evaluate("Date.now()")) / 86400000)
+    check("期限依長度計算（3章→最少7天）", days == 7, days)
+    check("正在讀存在 users.journeyReading 陣列",
+          [r["id"] for r in store["users/U1"].get("journeyReading", [])] == [NAHUM["id"]],
+          store["users/U1"].get("journeyReading"))
+    cls = page.locator(f'.gcell[title^="{NAHUM["full"]}"]').get_attribute("class")
+    check("看板該格顯示淺色 reading", "reading" in cls, cls)
+    page.evaluate(f"setReading({J2['id']}, true)"); page.wait_for_timeout(400)
+    page.evaluate(f"setReading({J3['id']}, true)"); page.wait_for_timeout(400)
+    ids = page.evaluate("READING.map(r=>r.id)")
+    check("同時最多 2 卷", len(ids) == 2 and J3["id"] not in ids, ids)
+    page.evaluate(f"setReading({J2['id']}, false)"); page.wait_for_timeout(500)
+    store = page.evaluate("window.__STORE__")
+    rd = store[f"groups/{gid}"].get("reading", {})
+    check("取消正在讀會刪掉 key（不留空物件的 uid）", "U1" not in (rd.get(f"b{J2['id']}") or {}), rd)
+    check("取消後 users.journeyReading 真的移除（陣列不被 merge 合併）",
+          J2["id"] not in [r["id"] for r in store["users/U1"].get("journeyReading", [])],
+          store["users/U1"].get("journeyReading"))
+    page.evaluate(f"toggleBook({NAHUM['id']}, true)"); page.wait_for_timeout(700)
+    store = page.evaluate("window.__STORE__")
+    check("讀完該卷自動清掉正在讀", NAHUM["id"] not in page.evaluate("READING.map(r=>r.id)")
+          and "U1" not in (store[f"groups/{gid}"].get("reading", {}).get(f"b{NAHUM['id']}") or {}),
+          store[f"groups/{gid}"].get("reading"))
+    page.evaluate(f"toggleBook({NAHUM['id']}, false)"); page.wait_for_timeout(600)
+    # 別人正在讀俄巴底亞書（最短的未讀書之一）→ 標「有人在讀」、推薦跳過它；過期的不算
+    page.evaluate(f"""
+      const g=window.__STORE__['groups/{gid}']; g.reading=g.reading||{{}};
+      g.reading['b{OBAD['id']}']={{U2:Date.now()+5*86400000}};
+      g.reading['b{J2['id']}']={{U2:Date.now()-1000}};
+    """)
+    page.evaluate(f"(async()=>{{await loadGroup('{gid}');renderGroups();render();}})()")
+    page.wait_for_timeout(400)
+    orow = page.locator(f'[data-book="{OBAD["id"]}"]').inner_text()
+    check("別人正在讀的書標『有人在讀』且不標『群組還沒人讀』", "有人在讀" in orow and "群組還沒人讀" not in orow, orow[:40])
+    j2row = page.locator(f'[data-book="{J2["id"]}"]').inner_text()
+    check("過期的正在讀不顯示", "有人在讀" not in j2row, j2row[:40])
+    gt = page.locator("#groupBody").inner_text()
+    check("正在讀也不顯示成員身分", "U2" not in gt and "example.com" not in gt)
+    page.evaluate("suggestEasy()"); page.wait_for_timeout(300)
+    st = page.locator("#suggestText").inner_text()
+    check("推薦跳過別人正在讀的書", OBAD["full"] not in st, st[:40])
+    page.evaluate(f"setReading({J3['id']}, true)"); page.wait_for_timeout(400)
+
     # 10. 退出群組 → 自己的痕跡全部移除，但別人的保留、個人進度不變
     page.evaluate("leaveGroup()")
     page.wait_for_timeout(800)
@@ -196,6 +249,8 @@ with sync_playwright() as p:
     # 步驟 6 取消勾選那鴻書留下的空陣列不算（那是 toggle 路徑）；退出本身不該再製造空陣列
     empties = [k for k, v in cov.items() if v == [] and k != f"b{NAHUM['id']}"]
     check("退出後不留空陣列 key", not empties, empties[:5])
+    rd = gdoc.get("reading", {})
+    check("退出後自己的正在讀全部移除", not any("U1" in (v or {}) for v in rd.values()), rd)
     check("退出後別人的點燈保留", cov.get(f"b{ISAIAH['id']}") == ["U2"], cov.get(f"b{ISAIAH['id']}"))
     check("退出後 memberCount 減一", gdoc.get("memberCount") == 1, gdoc.get("memberCount"))
     check("退出後個人進度不受影響",

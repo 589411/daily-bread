@@ -54,6 +54,8 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .chk{width:22px;height:22px;flex-shrink:0;accent-color:var(--acc3)}
 .bname{font-size:14.5px;font-weight:700;flex:1}
 .bname.done{text-decoration:line-through}
+.blink{color:inherit;text-decoration:underline dotted var(--tx2);text-underline-offset:3px}
+.blink:hover{color:var(--acc)}
 .bmeta{font-size:11px;color:var(--tx2);white-space:nowrap}
 .book-b{display:none;padding:0 12px 14px;border-top:1px solid var(--bdr)}
 .book-b.open{display:block}
@@ -61,6 +63,11 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--acc2);color:#fff;margin-left:4px}
 .tag.short{background:var(--acc3);color:#06281c}
 .tag.gap{background:var(--gold);color:#3a2c00}
+.tag.reading{background:rgba(52,211,153,.18);color:var(--acc3);border:1px dashed var(--acc3)}
+.rbtn{background:transparent;border:1px dashed var(--bdr);color:var(--tx2);border-radius:12px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;min-height:30px}
+.rbtn:hover{border-color:var(--acc3);color:var(--acc3)}
+.rbtn.on{background:rgba(52,211,153,.15);border:1px solid var(--acc3);color:var(--acc3);font-weight:700}
+.gcell.reading{background:rgba(52,211,153,.16);border:1px dashed var(--acc3);color:var(--acc3)}
 .suggest{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:10px;padding:12px;margin-bottom:14px;display:none}
 .suggest b{color:var(--acc3)}
 .syncbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:12px;color:var(--tx2);flex-wrap:wrap}
@@ -149,6 +156,10 @@ const YEAR_SIG="year365";           // 與 year.html 共用的進度鍵名
 let DATA=null, DONE=new Set(), ALLCHARS=0;
 let uid=null, userLabel="", cloudReady=false;
 let MYGROUPS=[], CURGROUP="", GDOC=null, LIT=new Set();
+// 「我正在讀」：[{id,exp}]。存成陣列而非 map——set(merge:true) 會深層合併 map，取消的 key 刪不掉
+let READING=[], RDSET=new Set();
+const READ_MAX=2, DAY=86400000;
+const readDays=b=>Math.max(7,Math.ceil(b.chapters/3)); // 依書卷長度給期限：每 3 章 1 天，最少 7 天
 
 function loadLocal(){try{return new Set((JSON.parse(localStorage.getItem(STORE_KEY)||"[]")).map(Number));}catch(e){return new Set();}}
 function saveLocal(){try{localStorage.setItem(STORE_KEY,JSON.stringify([...DONE]));}catch(e){}}
@@ -193,6 +204,7 @@ async function pullUser(){
   cloud.forEach(id=>DONE.add(id));
   saveLocal();
   if(DONE.size!==cloud.length||DONE.size!==before)await pushUser();
+  READING=Array.isArray(d.journeyReading)?d.journeyReading.filter(r=>r&&r.id):[];
   MYGROUPS=[];
   const gids=Array.isArray(d.myGroups)?d.myGroups:[];
   for(const gid of gids){
@@ -202,13 +214,14 @@ async function pullUser(){
     }catch(e){console.warn("讀取群組失敗",gid,e);}
   }
   if(MYGROUPS.length&&!MYGROUPS.some(g=>g.id===CURGROUP))CURGROUP=MYGROUPS[0].id;
+  await pruneReading();
   if(CURGROUP)await loadGroup(CURGROUP);
 }
 // merge:true 很重要：不能蓋掉 year.html 寫在同一份文件裡的 progress / profile
 async function pushUser(){
   if(!uid||!cloudReady)return;
   await firebase.firestore().collection("users").doc(uid).set({
-    journeyBooks:[...DONE],journeyUpdatedAt:Date.now(),ts:Date.now()
+    journeyBooks:[...DONE],journeyReading:READING,journeyUpdatedAt:Date.now(),ts:Date.now()
   },{merge:true});
 }
 function updateSyncUI(){
@@ -244,8 +257,10 @@ async function createGroup(){
   const db=firebase.firestore(), gid=genCode(8);
   const coverage={};
   [...DONE].forEach(id=>{coverage["b"+id]=[uid];});
+  const reading={};
+  READING.filter(r=>r.exp>Date.now()).forEach(r=>{reading["b"+r.id]={[uid]:r.exp};});
   try{
-    await db.collection("groups").doc(gid).set({name,ownerUid:uid,createdAt:Date.now(),memberCount:1,coverage});
+    await db.collection("groups").doc(gid).set({name,ownerUid:uid,createdAt:Date.now(),memberCount:1,coverage,reading});
     await db.collection("groups").doc(gid).collection("members").doc(uid).set({name:userLabel,joinedAt:Date.now()});
     await db.collection("users").doc(uid).set({myGroups:firebase.firestore.FieldValue.arrayUnion(gid)},{merge:true});
   }catch(e){alert("建立失敗："+e.message);return;}
@@ -265,6 +280,7 @@ async function joinGroup(){
   const FV=firebase.firestore.FieldValue;
   const patch={memberCount:FV.increment(1)};
   [...DONE].forEach(id=>{patch["coverage.b"+id]=FV.arrayUnion(uid);}); // 帶著自己讀過的書進來，立刻有貢獻
+  READING.filter(r=>r.exp>Date.now()).forEach(r=>{patch["reading.b"+r.id+"."+uid]=r.exp;});
   try{
     await ref.update(patch);
     await ref.collection("members").doc(uid).set({name:userLabel,joinedAt:Date.now()});
@@ -282,8 +298,9 @@ async function leaveGroup(){
   const patch={memberCount:FV.increment(-1)};
   try{
     // 只動自己有點亮的書卷；只剩自己一人時整個 key 刪掉，避免 coverage 留下空陣列
-    const cov=((await ref.get()).data()||{}).coverage||{};
+    const gd=(await ref.get()).data()||{}, cov=gd.coverage||{}, rd=gd.reading||{};
     Object.keys(cov).forEach(k=>{if(Array.isArray(cov[k])&&cov[k].includes(uid))patch["coverage."+k]=cov[k].length===1?FV.delete():FV.arrayRemove(uid);});
+    Object.keys(rd).forEach(k=>{if(rd[k]&&uid in rd[k])patch["reading."+k+"."+uid]=FV.delete();});
     await ref.update(patch);
     await ref.collection("members").doc(uid).delete();
     await db.collection("users").doc(uid).set({myGroups:FV.arrayRemove(CURGROUP)},{merge:true});
@@ -307,6 +324,56 @@ async function updateCoverageAll(bookId,on){
   await Promise.all(MYGROUPS.map(g=>db.collection("groups").doc(g.id).update(patch).catch(e=>console.warn(e))));
 }
 
+/* ────────── 「我正在讀」：淺色標記，幫群組分工；不是鎖，別人照樣可以讀 ────────── */
+function myReading(id){const r=READING.find(x=>x.id===id);return r&&r.exp>Date.now()?r:null;}
+// 群組裡「別人」正在讀的書卷（過期的不算）
+function othersReadingSet(){
+  const s=new Set(), now=Date.now();
+  if(GDOC&&GDOC.reading)Object.keys(GDOC.reading).forEach(k=>{
+    const m=GDOC.reading[k]||{};
+    if(Object.keys(m).some(u=>u!==uid&&Number(m[u])>now))s.add(Number(String(k).replace(/^b/,"")));
+  });
+  return s;
+}
+function readingPatch(id,exp){
+  const FV=firebase.firestore.FieldValue, p={};
+  p["reading.b"+id+"."+uid]=exp?exp:FV.delete();
+  return p;
+}
+async function syncReading(patch){
+  if(!uid||!cloudReady)return;
+  const db=firebase.firestore();
+  await pushUser();
+  if(patch&&Object.keys(patch).length)
+    await Promise.all(MYGROUPS.map(g=>db.collection("groups").doc(g.id).update(patch).catch(e=>console.warn(e))));
+}
+// 過期或已讀完的標記清掉（自己的），群組那邊一併刪 key
+async function pruneReading(){
+  const now=Date.now(), drop=READING.filter(r=>r.exp<=now||DONE.has(r.id));
+  if(!drop.length)return;
+  READING=READING.filter(r=>!drop.includes(r));
+  const patch={};drop.forEach(r=>Object.assign(patch,readingPatch(r.id,0)));
+  await syncReading(patch);
+}
+async function setReading(id,on){
+  if(!uid||!MYGROUPS.length)return;
+  const b=DATA.books.find(x=>x.id===id);if(!b)return;
+  if(on){
+    READING=READING.filter(r=>r.exp>Date.now()&&!DONE.has(r.id)&&r.id!==id);
+    if(READING.length>=READ_MAX){toast("最多同時標 "+READ_MAX+" 卷，先讀完或取消一卷吧");return;}
+    const exp=Date.now()+readDays(b)*DAY;
+    READING.push({id,exp});
+    render();renderGroups();
+    toast("已標記正在讀《"+b.full+"》，"+readDays(b)+" 天內有效");
+    await syncReading(readingPatch(id,exp));
+  }else{
+    READING=READING.filter(r=>r.id!==id);
+    render();renderGroups();
+    await syncReading(readingPatch(id,0));
+  }
+  if(CURGROUP){await loadGroup(CURGROUP);renderGroups();render();}
+}
+
 function renderGroups(){
   const box=document.getElementById("groupBody");if(!box)return;
   if(!cloudReady){box.innerHTML='<p class="muted">雲端尚未設定，群組功能無法使用。</p>';return;}
@@ -321,7 +388,8 @@ function renderGroups(){
       +'<div class="toolbar"><button class="qbtn pri" onclick="createGroup()">＋ 建立群組</button><button class="qbtn" onclick="joinGroup()">輸入邀請碼加入</button></div>';
     return;
   }
-  const lit=litSet(), total=DATA.books.length;
+  const lit=litSet(), total=DATA.books.length, rds=othersReadingSet();
+  READING.forEach(r=>{if(r.exp>Date.now())rds.add(r.id);}); // 自己正在讀的也顯示淺色
   const litChars=DATA.books.filter(b=>lit.has(b.id)).reduce((s,b)=>s+b.totalChars,0);
   let h="";
   if(MYGROUPS.length>1){
@@ -338,9 +406,11 @@ function renderGroups(){
   h+=remain===0
     ? '<p class="muted" style="margin-top:12px;color:var(--acc3)"><b>🏆 66 卷全部點亮了——這個群組一起讀完了整本聖經。</b></p>'
     : '<p class="muted" style="margin-top:12px">已經一起點亮了 <b>'+lit.size+'</b> 盞燈，還有 <b>'+remain+'</b> 卷在等人走進去。點一下灰色格子，看看那一卷在說什麼。</p>';
-  h+='<div class="gmap">'+DATA.books.slice().sort((a,b)=>a.id-b.id).map(b=>
-      '<div class="gcell'+(lit.has(b.id)?' on':'')+'" title="'+esc(b.full)+(lit.has(b.id)?'：已點亮':'：還沒有人讀過')+'" onclick="jumpToBook('+b.id+')">'+esc(b.abbr||b.full)+'</div>'
-    ).join("")+'</div>';
+  h+='<div class="gmap">'+DATA.books.slice().sort((a,b)=>a.id-b.id).map(b=>{
+      const on=lit.has(b.id), rd=!on&&rds.has(b.id);
+      return '<div class="gcell'+(on?' on':rd?' reading':'')+'" title="'+esc(b.full)+(on?'：已點亮':rd?'：有人正在讀':'：還沒有人讀過')+'" onclick="jumpToBook('+b.id+')">'+esc(b.abbr||b.full)+'</div>';
+    }).join("")+'</div>'
+    +'<p class="muted" style="font-size:11.5px;margin-top:6px">實心＝已點亮　虛線淺色＝有人正在讀（不是佔位，想一起讀也很好）。在下方書卷按「＋ 我在讀」，讓大家知道你走到哪。</p>';
   h+='<div class="toolbar"><button class="qbtn" onclick="showCode()">🔢 顯示邀請碼</button>'
     +'<button class="qbtn" onclick="createGroup()">＋ 另外建一個</button>'
     +'<button class="qbtn" onclick="joinGroup()">加入其他群組</button>'
@@ -368,6 +438,7 @@ function sortedBooks(order){
 function render(){
   const order=document.getElementById("orderSel").value;
   LIT=litSet(); // 每次重繪算一次就好，書列不用逐卷重算
+  RDSET=othersReadingSet();
   const total=DATA.books.length, doneCount=DONE.size;
   const doneChars=DATA.books.filter(b=>DONE.has(b.id)).reduce((s,b)=>s+b.totalChars,0);
   const bookPct=Math.round(doneCount/total*1000)/10;
@@ -399,21 +470,29 @@ function shortTag(b){
 }
 function bookRow(b){
   const isDone=DONE.has(b.id), easy=shortTag(b);
-  const isGap=MYGROUPS.length&&!LIT.has(b.id); // 群組還沒有人讀過
+  const isGap=MYGROUPS.length&&!LIT.has(b.id)&&!RDSET.has(b.id); // 群組還沒有人讀過、也沒人正在讀
+  const othersRd=MYGROUPS.length&&!LIT.has(b.id)&&RDSET.has(b.id);
+  const mine=myReading(b.id), canMark=uid&&MYGROUPS.length&&!isDone;
+  const left=mine?Math.max(1,Math.ceil((mine.exp-Date.now())/DAY)):0;
   const div=document.createElement("div");
   div.className="book"+(isDone?" done":"");
   div.setAttribute("data-book",b.id);
   div.innerHTML='<div class="book-h">'
     +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記'+esc(b.full)+'完成">'
-    +'<span class="bname'+(isDone?' done':'')+'">'+esc(b.full)
+    +'<span class="bname'+(isDone?' done':'')+'"><a class="blink" href="index.html?ref='+encodeURIComponent(b.abbr+(b.chapters>1?'1':''))+'" title="打開《'+esc(b.full)+'》經文">'+esc(b.full)+'</a>'
       +(easy?'<span class="tag short">易讀</span>':'')
       +(isGap?'<span class="tag gap">群組還沒人讀</span>':'')
+      +(othersRd?'<span class="tag reading">有人在讀</span>':'')
     +'</span>'
     +'<span class="bmeta">'+b.chapters+'章・約'+fmtN(b.totalChars)+'字</span>'
+    +(canMark?'<button class="rbtn'+(mine?' on':'')+'" aria-label="'+(mine?'取消正在讀':'標記正在讀')+esc(b.full)+'">'+(mine?'📖 在讀・剩'+left+'天':'＋ 我在讀')+'</button>':'')
     +'</div><div class="book-b"><p>'+esc(b.intro)+'</p></div>';
   const chk=div.querySelector(".chk"), head=div.querySelector(".book-h"), body=div.querySelector(".book-b");
   chk.onclick=e=>{e.stopPropagation();toggleBook(b.id,chk.checked);};
   head.onclick=()=>body.classList.toggle("open");
+  div.querySelector(".blink").onclick=e=>e.stopPropagation(); // 點書名去讀經文，不展開也不打勾
+  const rb=div.querySelector(".rbtn");
+  if(rb)rb.onclick=e=>{e.stopPropagation();setReading(b.id,!mine);};
   return div;
 }
 async function toggleBook(id,on){
@@ -422,7 +501,8 @@ async function toggleBook(id,on){
   if(on){const b=DATA.books.find(x=>x.id===id);if(b)toast("讀完《"+b.full+"》了，這一步走得很好 🌱");}
   if(!uid||!cloudReady)return;
   try{
-    await pushUser();
+    if(on&&READING.some(r=>r.id===id)){READING=READING.filter(r=>r.id!==id);await syncReading(readingPatch(id,0));}
+    else await pushUser();
     await updateCoverageAll(id,on);
     if(CURGROUP){await loadGroup(CURGROUP);renderGroups();render();}
   }catch(e){console.warn(e);}
@@ -456,11 +536,12 @@ function suggestEasy(){
   const mine=DATA.books.filter(b=>!DONE.has(b.id));
   if(!mine.length){txt.innerHTML="你已經把 66 卷都讀完了。🏆";box.style.display="";return;}
   const lit=litSet();
-  const gap=MYGROUPS.length?mine.filter(b=>!lit.has(b.id)):[];
+  const rds=othersReadingSet();
+  const gap=MYGROUPS.length?mine.filter(b=>!lit.has(b.id)&&!rds.has(b.id)):[];
   const pool=(gap.length?gap:mine).slice().sort((a,b)=>a.totalChars-b.totalChars);
   const b=pool[0];
   txt.innerHTML=gap.length
-    ? '<b>'+esc(b.full)+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，而且<b>你的群組還沒有人讀過這一卷</b>——讀完就能幫大家點亮一格。'
+    ? '<b>'+esc(b.full)+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，而且<b>你的群組還沒有人讀過、也沒人正在讀這一卷</b>——讀完就能幫大家點亮一格。'
     : '<b>'+esc(b.full)+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，現在很適合先完成它。';
   box.style.display="";
   document.getElementById("orderSel").value="easy";render();

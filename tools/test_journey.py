@@ -111,6 +111,19 @@ with sync_playwright() as p:
           page.locator("#stDone").inner_text() == f"{expect_total - 1}/66",
           page.locator("#stDone").inner_text())
 
+    # 11. 點書名 → 連到經文（index.html?ref=），不會打勾也不展開
+    before = page.locator("#stDone").inner_text()
+    row = page.locator('[data-book="1"]')
+    href = row.locator(".blink").get_attribute("href")
+    check("書名連到創世記第1章經文", href == "index.html?ref=" + "%E5%89%B51", href)
+    jude = page.locator('[data-book="65"] .blink').get_attribute("href")
+    check("單章書連結不帶章號（猶大書）", jude == "index.html?ref=%E7%8C%B6", jude)
+    row.locator(".blink").click()
+    page.wait_for_timeout(600)
+    check("點書名會導到經文頁", "index.html?ref=" in page.url, page.url)
+    page.go_back(); page.wait_for_timeout(600)
+    check("點書名不會打勾", page.locator("#stDone").inner_text() == before, page.locator("#stDone").inner_text())
+
     browser.close()
 
 httpd.shutdown()

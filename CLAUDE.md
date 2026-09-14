@@ -464,6 +464,15 @@ groups/{groupId}/members/{uid}
 這一版是在那個前提下設計的，具體做法：
 
 - **不認領、不分配。** 誰想讀哪卷就讀哪卷，讀完自動點亮。沒有「你負責以賽亞書」這種會讓人卡住全隊的責任綁定。
+- **「我在讀」是軟標記，不是鎖（2026-09-14 加入，Joseph 提的分工需求）。** 按「＋ 我在讀」→ 群組看板該格變虛線淺色、
+  書卷列標「有人在讀」、推薦會跳過它，藉此自然分散。三個刻意的限制，**不要拿掉**：
+  1. **會過期**：期限 `readDays(b)=max(7, ceil(章數/3))` 天，到期自動不算——否則讀一半放棄的人會永久佔格、還背罪惡感。
+  2. **每人最多 2 卷**（`READ_MAX`）——避免一次圈一堆把格子佔滿。
+  3. **不顯示是誰**，且**不擋別人**：淺色格照樣可以讀、可以點亮（看板文案寫「不是佔位，想一起讀也很好」）。
+  - 資料：`groups/{gid}.reading = {"b<id>": {<uid>: expiresAt}}`，寫入用 `update("reading.bN.<uid>")`，取消用 `FieldValue.delete()`；
+    個人側存 `users/{uid}.journeyReading = [{id,exp}]`——**刻意用陣列不用 map**：`set(merge:true)` 會深層合併 map，取消的 key 永遠刪不掉。
+  - 讀完該卷、退出群組都會清掉自己的標記；登入時 `pruneReading()` 清自己過期的。只有登入且有群組時才出現按鈕。
+- **點書名 → 開經文**（`index.html?ref=簡稱1`，單章書只帶簡稱）；只有點勾選框才算完成，點其他地方展開導論。
 - **只會加分，不會扣分。** 沒讀完不會有任何催促、紅字、落後提示，那一格就只是還沒亮。
 - **看板不顯示是誰讀的。** 但要誠實：**小群組沒有真正的匿名**（兩個人的群組裡「有人讀過」必然是對方），
   所以文案寫的是「不會顯示是誰讀的」，沒有承諾匿名。`coverage` 裡確實存著 uid，devtools 看得到。
@@ -479,7 +488,7 @@ groups/{groupId}/members/{uid}
 手動匯入後就是一般紀錄，可自由取消。
 
 ### 測試
-`tools/test_journey.py`（功能 15 項）與 `tools/test_journey_groups.py`（群組資料操作 23 項）。
+`tools/test_journey.py`（功能 19 項）與 `tools/test_journey_groups.py`（群組資料操作 37 項，含「我在讀」與退出不留空陣列）。
 需要 `pip install playwright && playwright install chromium`，直接 `python3 tools/test_journey.py` 執行，
 會自己起 HTTP server 指向 repo 根目錄。群組那份用一個假的 Firestore 替身，
 刻意複製了真實的 `update()` vs `set+merge` 語意差異，所以能在本機擋下上面第 2 條約定的錯誤。
