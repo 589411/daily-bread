@@ -94,6 +94,8 @@ with sync_playwright() as p:
     page = browser.new_context().new_page()
     errs = []
     page.on("pageerror", lambda e: errs.append(str(e)))
+    # 有網路時真的 Firebase SDK 會從 CDN 載入並蓋掉假的 window.firebase，所以擋掉
+    page.route("**/firebasejs/**", lambda r: r.fulfill(status=200, content_type="text/javascript", body=""))
     page.add_init_script(FAKE)
     page.add_init_script("window.prompt=(m,d)=>window.__PROMPT__||'測試團契';window.confirm=()=>true;window.alert=()=>{};")
     page.goto(f"http://127.0.0.1:{PORT}/journey.html", wait_until="domcontentloaded")
