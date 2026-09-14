@@ -18,8 +18,11 @@ LINE **每日自動推播已停用**（免費額度 200 則/月、群組按人�
   本機跑測試需 playwright（可用 venv：`python3 -m venv pw && pw/bin/pip install playwright && pw/bin/playwright install chromium`）。
 - ✅ **A2 已完成（2026-09-14 21:24）**：用 Chrome（589411 帳號那個 Chrome）把 `firestore.rules`（ADMIN_UID＝`BuVVEegTwEPS50rWyc6cSHwaJzi1`）發佈到 Console。
   users/codes 行為與 9/6 版相同，只多了 `groups` 區段；要回復可在 Console 規則歷史選 9/6 版。
-- **A3. 真人實測一次**（我測不到，需要真實 Google 帳號）：
-  登入 → 建立群組 → 確認已讀的書自動點亮 → 邀請碼給一個人試加入。
+- ✅ **A3 大部分完成（2026-09-14 線上實測，589411 帳號）**：勾書卷→寫入 journeyBooks、建群組→已讀書卷自動點亮、
+  再勾一卷→coverage 巢狀寫入（無字面 `coverage.bN` 欄位）、退出→自己的 uid 移除且 memberCount 歸 0、
+  群組擁有者可刪群組、users 文件的 `progress`/`profile`/`yearPlan` 全程保留。測試資料已清掉。
+  - **只剩**：用「第二個 Google 帳號」輸入邀請碼加入群組（需要另一個人，join 路徑尚未線上實測）。
+  - 小瑕疵（不影響功能）：`leaveGroup()` 對 66 卷全部送 arrayRemove，會留下 66 個空陣列 key；可改成只送自己有點亮的那幾卷。
 - ⚠️ **git 鎖檔**：若看到 `Unable to create '.git/index.lock': File exists`，
   那不是 git 當掉，是遠端沙箱不能刪檔留下的殘留，`rm -f .git/index.lock` 即可。
   （已清過一次，`.git/_stale/` 裡是搬走的殘留，可自行刪除。）
