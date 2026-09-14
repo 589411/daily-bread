@@ -27,6 +27,7 @@ window.__STORE__ = {};
   function applySentinel(cur,val){
     if(val&&val.__op==='arrayUnion'){const a=Array.isArray(cur)?cur.slice():[];val.v.forEach(x=>{if(!a.includes(x))a.push(x);});return a;}
     if(val&&val.__op==='arrayRemove'){const a=Array.isArray(cur)?cur.slice():[];return a.filter(x=>!val.v.includes(x));}
+    if(val&&val.__op==='delete')return undefined;
     if(val&&val.__op==='increment')return (typeof cur==='number'?cur:0)+val.v;
     return val;
   }
@@ -49,7 +50,9 @@ window.__STORE__ = {};
         if(window.__STORE__[path]===undefined)throw new Error('No document to update: '+path);
         const base=JSON.parse(JSON.stringify(window.__STORE__[path]));
         Object.keys(patch).forEach(k=>{ // update：點 = 路徑
-          deepSet(base,k,applySentinel(deepGet(base,k),patch[k]));
+          const nv=applySentinel(deepGet(base,k),patch[k]);
+          if(nv===undefined){const ks=k.split('.');const par=ks.length>1?deepGet(base,ks.slice(0,-1).join('.')):base;if(par)delete par[ks[ks.length-1]];}
+          else deepSet(base,k,nv);
         });
         window.__STORE__[path]=base;
       },
@@ -74,7 +77,8 @@ window.__STORE__ = {};
   window.firebase.firestore.FieldValue={
     arrayUnion:(...v)=>({__op:'arrayUnion',v:v}),
     arrayRemove:(...v)=>({__op:'arrayRemove',v:v}),
-    increment:(v)=>({__op:'increment',v:v})
+    increment:(v)=>({__op:'increment',v:v}),
+    delete:()=>({__op:'delete'})
   };
 })();
 """
@@ -189,6 +193,9 @@ with sync_playwright() as p:
     cov = gdoc.get("coverage", {})
     mine_left = [k for k, v in cov.items() if isinstance(v, list) and "U1" in v]
     check("退出後自己的點燈全部移除", not mine_left, mine_left)
+    # 步驟 6 取消勾選那鴻書留下的空陣列不算（那是 toggle 路徑）；退出本身不該再製造空陣列
+    empties = [k for k, v in cov.items() if v == [] and k != f"b{NAHUM['id']}"]
+    check("退出後不留空陣列 key", not empties, empties[:5])
     check("退出後別人的點燈保留", cov.get(f"b{ISAIAH['id']}") == ["U2"], cov.get(f"b{ISAIAH['id']}"))
     check("退出後 memberCount 減一", gdoc.get("memberCount") == 1, gdoc.get("memberCount"))
     check("退出後個人進度不受影響",

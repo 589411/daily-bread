@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>書卷旅程 · 走一步算一步的讀經計畫</title>
+<title>書卷旅程 · 這一生，好好讀完一遍聖經</title>
 <meta name="theme-color" content="#0f1117">
 <script>
 (function(){var t=localStorage.getItem('theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark');document.documentElement.setAttribute('data-theme',t);})();
@@ -91,8 +91,8 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
   <div class="syncbar" id="syncBar"><span class="syncdot"></span>進度存在這台裝置</div>
 
   <div class="block hero">
-    <h2>走一步算一步，不用一年讀完</h2>
-    <p class="muted">這不是限時的讀經計畫，是一份陪你走完 66 卷書的地圖。想快想慢都可以，中間停多久都能接著走——進度只看你「完成了幾卷」，跟時間無關。</p>
+    <h2>這一生，總要好好讀完一遍聖經</h2>
+    <p class="muted">不必趕，也不用一年讀完。這是一份陪你走完 66 卷書的地圖——想快想慢都可以，停下來多久都沒關係，回來時它還在這裡等你。<br>每讀完一卷，這裡就替你記下一個與神相遇的時刻。</p>
     <div class="prow">
       <span class="plabel">書卷 <b id="stDone">0/66</b></span>
       <div class="bar"><i id="barBooks"></i></div>
@@ -280,8 +280,10 @@ async function leaveGroup(){
   if(!confirm("確定退出「"+(g?g.name:CURGROUP)+"」？\n你個人的讀經進度不會消失，只是不再算進這個群組。"))return;
   const db=firebase.firestore(), FV=firebase.firestore.FieldValue, ref=db.collection("groups").doc(CURGROUP);
   const patch={memberCount:FV.increment(-1)};
-  DATA.books.forEach(b=>{patch["coverage.b"+b.id]=FV.arrayRemove(uid);});
   try{
+    // 只動自己有點亮的書卷；只剩自己一人時整個 key 刪掉，避免 coverage 留下空陣列
+    const cov=((await ref.get()).data()||{}).coverage||{};
+    Object.keys(cov).forEach(k=>{if(Array.isArray(cov[k])&&cov[k].includes(uid))patch["coverage."+k]=cov[k].length===1?FV.delete():FV.arrayRemove(uid);});
     await ref.update(patch);
     await ref.collection("members").doc(uid).delete();
     await db.collection("users").doc(uid).set({myGroups:FV.arrayRemove(CURGROUP)},{merge:true});
@@ -309,12 +311,12 @@ function renderGroups(){
   const box=document.getElementById("groupBody");if(!box)return;
   if(!cloudReady){box.innerHTML='<p class="muted">雲端尚未設定，群組功能無法使用。</p>';return;}
   if(!uid){
-    box.innerHTML='<p class="muted">和一群人一起，把 66 卷書全部點亮——每一卷只要有<b>一個人</b>讀完就會亮起來。看板只顯示哪幾卷亮了，不會列出是誰讀的。</p>'
+    box.innerHTML='<p class="muted"><b>一個人走得快，一群人走得遠。</b>找幾個弟兄姊妹，一起把 66 卷書點亮——每一卷只要有<b>一個人</b>讀完就會亮起來，你讀的每一卷，都是送給大家的一盞燈。看板只顯示哪幾卷亮了，不會列出是誰讀的。</p>'
       +'<div class="toolbar"><button class="qbtn pri" onclick="cloudSignIn()">☁ Google 登入</button></div>';
     return;
   }
   if(!MYGROUPS.length){
-    box.innerHTML='<p class="muted">你還沒有加入任何群組。建立一個，把邀請碼傳到你的 LINE 群，就能一起點燈。<br>'
+    box.innerHTML='<p class="muted">一個人走得快，一群人走得遠。建立一個群組，把邀請碼傳到你的 LINE 群，讓我們合力讀完整本聖經。<br>'
       +'<b>你目前已讀完的 '+DONE.size+' 卷，會立刻幫新群組點亮 '+DONE.size+' 格。</b></p>'
       +'<div class="toolbar"><button class="qbtn pri" onclick="createGroup()">＋ 建立群組</button><button class="qbtn" onclick="joinGroup()">輸入邀請碼加入</button></div>';
     return;
@@ -335,7 +337,7 @@ function renderGroups(){
   const remain=total-lit.size;
   h+=remain===0
     ? '<p class="muted" style="margin-top:12px;color:var(--acc3)"><b>🏆 66 卷全部點亮了——這個群組一起讀完了整本聖經。</b></p>'
-    : '<p class="muted" style="margin-top:12px">還有 <b>'+remain+'</b> 卷沒有人讀過。點一下灰色格子可以跳到那一卷。</p>';
+    : '<p class="muted" style="margin-top:12px">已經一起點亮了 <b>'+lit.size+'</b> 盞燈，還有 <b>'+remain+'</b> 卷在等人走進去。點一下灰色格子，看看那一卷在說什麼。</p>';
   h+='<div class="gmap">'+DATA.books.slice().sort((a,b)=>a.id-b.id).map(b=>
       '<div class="gcell'+(lit.has(b.id)?' on':'')+'" title="'+esc(b.full)+(lit.has(b.id)?'：已點亮':'：還沒有人讀過')+'" onclick="jumpToBook('+b.id+')">'+esc(b.abbr||b.full)+'</div>'
     ).join("")+'</div>';
@@ -417,6 +419,7 @@ function bookRow(b){
 async function toggleBook(id,on){
   on?DONE.add(id):DONE.delete(id);
   saveLocal();render();
+  if(on){const b=DATA.books.find(x=>x.id===id);if(b)toast("讀完《"+b.full+"》了，這一步走得很好 🌱");}
   if(!uid||!cloudReady)return;
   try{
     await pushUser();

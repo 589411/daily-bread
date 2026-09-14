@@ -22,7 +22,10 @@ LINE **每日自動推播已停用**（免費額度 200 則/月、群組按人�
   再勾一卷→coverage 巢狀寫入（無字面 `coverage.bN` 欄位）、退出→自己的 uid 移除且 memberCount 歸 0、
   群組擁有者可刪群組、users 文件的 `progress`/`profile`/`yearPlan` 全程保留。測試資料已清掉。
   - **只剩**：用「第二個 Google 帳號」輸入邀請碼加入群組（需要另一個人，join 路徑尚未線上實測）。
-  - 小瑕疵（不影響功能）：`leaveGroup()` 對 66 卷全部送 arrayRemove，會留下 66 個空陣列 key；可改成只送自己有點亮的那幾卷。
+  - ✅ 已修（2026-09-14）：`leaveGroup()` 改成只動自己點亮的書卷，只剩自己時用 `FieldValue.delete()` 刪 key，不再留 66 個空陣列。
+    （殘留：取消勾選單卷仍會留一個空陣列，無害。）
+- ✅ **journey.html 文案加溫度（2026-09-14）**：hero「這一生，總要好好讀完一遍聖經」、群組「一個人走得快，一群人走得遠」、
+  讀完一卷跳鼓勵 toast。原則仍是不催促、不製造罪惡感。
 - ⚠️ **git 鎖檔**：若看到 `Unable to create '.git/index.lock': File exists`，
   那不是 git 當掉，是遠端沙箱不能刪檔留下的殘留，`rm -f .git/index.lock` 即可。
   （已清過一次，`.git/_stale/` 裡是搬走的殘留，可自行刪除。）
