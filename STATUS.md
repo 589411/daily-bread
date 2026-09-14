@@ -13,7 +13,9 @@ LINE **每日自動推播已停用**（免費額度 200 則/月、群組按人�
 ## 下一個具體動作 ⭐
 
 ### ⭐ 明天從這裡開始（2026-09-14 收工）
-1. **雙帳號真人驗證**（唯一沒測到的）：找第二個 Google 帳號 → 輸入邀請碼加入群組 → 兩邊互相看到「點亮」與「我在讀」淺色格。
+1. **真機驗證邀請連結（2026-09-15 上線，我測不到）**：在 LINE 傳 `…/journey.html?join=CODE&openExternalBrowser=1` 給自己，
+   iPhone／Android 各點一次 → 確認**跳出 LINE 用 Safari/Chrome 開**、Google 登入成功、自動加入。
+   再用第二個 Google 帳號加入 → 兩邊互相看到「點亮」與「我在讀」淺色格。
 2. 觀察實際使用回饋，再決定 IDEAS.md 裡的「讀完一卷寫一句感動」要不要做。
 3. `insight/` 有另一個 session 未提交的變更（HARNESS.md、insights.json、PROGRESS.md），不是本線工作，先別碰。
 

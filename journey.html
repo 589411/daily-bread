@@ -88,6 +88,10 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .invite .muted{margin:0;font-size:12px}
 .icode{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:2px;color:var(--acc)}
 .qbtn.line{background:#06c755;border-color:#06c755;color:#fff;text-decoration:none;display:inline-flex;align-items:center}
+.joincard{background:linear-gradient(135deg,rgba(52,211,153,.14),rgba(108,143,255,.12));border:1.5px solid var(--acc3);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center}
+.joincard h2{color:var(--acc3);font-size:16px;margin-bottom:6px}
+.joincard .qbtn.pri{font-size:15px;padding:12px 22px;min-height:48px;margin-top:6px}
+.joincard .later{display:block;margin:6px auto 0;background:none;border:none;color:var(--tx2);font-size:12px;margin-top:8px;cursor:pointer;font-family:inherit;text-decoration:underline}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc3);color:#06281c;padding:12px 22px;border-radius:8px;font-weight:700;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
 :root[data-theme="light"] .toast{color:#fff}
 .toast.show{opacity:1}
@@ -103,6 +107,7 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
   <div class="nav"><a href="index.html">每日進度</a><a href="index.html?read=1">閱讀聖經</a><a href="year.html">一年讀經</a><a href="journey.html" class="on">組隊讀聖經</a><a href="planner.html">我的計畫</a><button id="themeBtn" class="themebtn" onclick="toggleTheme()" aria-label="切換深淺色主題">☀️</button></div>
 </header>
 <main>
+  <div class="joincard" id="joinCard" hidden></div>
   <div class="syncbar" id="syncBar"><span class="syncdot"></span>進度存在這台裝置</div>
 
   <div class="block hero">
@@ -167,6 +172,10 @@ let MYGROUPS=[], CURGROUP="", GDOC=null, LIT=new Set();
 // 「我正在讀」：[{id,exp}]。存成陣列而非 map——set(merge:true) 會深層合併 map，取消的 key 刪不掉
 let READING=[], RDSET=new Set();
 const READ_MAX=2, DAY=86400000;
+// 邀請連結 ?join=CODE：記在 localStorage，登入過程（含重新整理）不會掉；按一次「加入」才真的加入
+const SITE="https://daily-bread.launchdock.app/journey.html";
+const PJ_KEY="journeyPendingJoin";
+let PENDING=null, PENDING_NAME="", AUTOJOIN=false;
 const readDays=b=>Math.max(7,Math.ceil(b.chapters/3)); // 依書卷長度給期限：每 3 章 1 天，最少 7 天
 
 function loadLocal(){try{return new Set((JSON.parse(localStorage.getItem(STORE_KEY)||"[]")).map(Number));}catch(e){return new Set();}}
@@ -177,7 +186,8 @@ async function boot(){
   DATA=await fetch("data/book_journey.json").then(r=>r.json());
   ALLCHARS=DATA.books.reduce((s,b)=>s+b.totalChars,0);
   DONE=loadLocal();
-  render();renderGroups();
+  readJoinParam();
+  render();renderGroups();renderJoinCard();
   initCloud();
 }
 
@@ -194,6 +204,7 @@ function initCloud(){
       uid=null;userLabel="";MYGROUPS=[];CURGROUP="";GDOC=null;
     }
     updateSyncUI();render();renderGroups();
+    await handlePendingJoin();
   });
 }
 function cloudSignIn(){
@@ -274,17 +285,23 @@ async function createGroup(){
   }catch(e){alert("建立失敗："+e.message);return;}
   MYGROUPS.push({id:gid,name});CURGROUP=gid;
   await loadGroup(gid);renderGroups();
-  prompt("群組「"+name+"」建立完成。\n把這組邀請碼傳到你的 LINE 群，大家輸入就能加入：",gid);
+  prompt("群組「"+name+"」建立完成。\n複製這個連結傳到 LINE，大家點了就能加入（看板上也隨時可以再複製）：",inviteLink(gid));
 }
 async function joinGroup(){
   if(!uid){alert("請先用 Google 登入才能加入群組");return;}
   const code=(prompt("輸入邀請碼：")||"").trim().toUpperCase();
   if(!code)return;
+  const r=await joinByCode(code);
+  if(r==="notfound")alert("找不到這組邀請碼，請再確認一次。");
+  else if(r&&r.error)alert(r.error);
+}
+// 回傳 "joined" | "already" | "notfound" | {error}
+async function joinByCode(code){
   const db=firebase.firestore(), ref=db.collection("groups").doc(code);
   let snap;
-  try{snap=await ref.get();}catch(e){alert("查詢失敗："+e.message);return;}
-  if(!snap.exists){alert("找不到這組邀請碼，請再確認一次。");return;}
-  if(MYGROUPS.some(g=>g.id===code)){await switchGroup(code);toast("你已經在這個群組裡了");return;}
+  try{snap=await ref.get();}catch(e){return {error:"查詢失敗："+e.message};}
+  if(!snap.exists)return "notfound";
+  if(MYGROUPS.some(g=>g.id===code)){await switchGroup(code);toast("你已經在這個群組裡了");return "already";}
   const FV=firebase.firestore.FieldValue;
   const patch={memberCount:FV.increment(1)};
   [...DONE].forEach(id=>{patch["coverage.b"+id]=FV.arrayUnion(uid);}); // 帶著自己讀過的書進來，立刻有貢獻
@@ -293,10 +310,65 @@ async function joinGroup(){
     await ref.update(patch);
     await ref.collection("members").doc(uid).set({name:userLabel,joinedAt:Date.now()});
     await db.collection("users").doc(uid).set({myGroups:FV.arrayUnion(code)},{merge:true});
-  }catch(e){alert("加入失敗："+e.message);return;}
+  }catch(e){return {error:"加入失敗："+e.message};}
   MYGROUPS.push({id:code,name:(snap.data()||{}).name||code});
   CURGROUP=code;await loadGroup(code);renderGroups();render();
-  toast("已加入群組");
+  toast("已加入群組，一起點燈吧 🔥");
+  return "joined";
+}
+
+/* ────────── 邀請連結：點連結 →（登入）→ 按一次加入 ────────── */
+function readJoinParam(){
+  let code="";
+  try{
+    const q=new URLSearchParams(location.search);
+    code=(q.get("join")||"").trim().toUpperCase();
+    if(q.has("join")||q.has("openExternalBrowser")){
+      q.delete("join");q.delete("openExternalBrowser");
+      const rest=q.toString();
+      history.replaceState(null,"",location.pathname+(rest?"?"+rest:"")+location.hash);
+    }
+  }catch(e){}
+  if(/^[A-Z0-9]{8}$/.test(code)){PENDING=code;try{localStorage.setItem(PJ_KEY,code);}catch(e){}}
+  else{try{const c=localStorage.getItem(PJ_KEY);if(c&&/^[A-Z0-9]{8}$/.test(c))PENDING=c;}catch(e){}}
+}
+function clearPending(){PENDING=null;PENDING_NAME="";AUTOJOIN=false;try{localStorage.removeItem(PJ_KEY);}catch(e){}renderJoinCard();}
+function renderJoinCard(){
+  const box=document.getElementById("joinCard");if(!box)return;
+  if(!PENDING||!cloudReady&&window.firebase){box.hidden=true;return;}
+  if(!window.firebase){box.hidden=false;box.innerHTML='<h2>📚 你收到一個組隊讀聖經的邀請</h2><p class="muted">目前無法連上雲端，請稍後重新整理再試。</p>';return;}
+  const title=PENDING_NAME?'邀請你加入「'+esc(PENDING_NAME)+'」':'你收到一個組隊讀聖經的邀請';
+  box.hidden=false;
+  box.innerHTML='<h2>📚 '+title+'</h2>'
+    +'<p class="muted" style="margin:0">一個人走得快，一群人走得遠——一起把 66 卷聖經點亮。</p>'
+    +(uid
+      ? '<button class="qbtn pri" onclick="acceptJoin()">加入群組</button>'
+      : '<button class="qbtn pri" onclick="signInAndJoin()">用 Google 登入並加入</button>'
+        +'<p class="muted" style="font-size:11.5px;margin:8px 0 0">登入是為了換手機也不會弄丟進度。</p>')
+    +'<button class="later" onclick="clearPending()">先不要</button>';
+}
+function signInAndJoin(){AUTOJOIN=true;cloudSignIn();}
+async function acceptJoin(){
+  if(!PENDING||!uid)return;
+  const code=PENDING;
+  const r=await joinByCode(code);
+  if(r==="notfound"){toast("這個邀請已經失效了（群組可能被刪除）");clearPending();return;}
+  if(r&&r.error){toast(r.error);return;}
+  clearPending();
+  const blk=document.getElementById("groupBody");if(blk)blk.scrollIntoView({behavior:"smooth",block:"start"});
+}
+// 登入後：已是成員就直接切過去；從「登入並加入」來的就自動加入；否則顯示群組名讓他按加入
+async function handlePendingJoin(){
+  if(!PENDING){renderJoinCard();return;}
+  if(!uid){renderJoinCard();return;}
+  if(MYGROUPS.some(g=>g.id===PENDING)){await switchGroup(PENDING);toast("你已經在這個群組裡了");clearPending();return;}
+  if(AUTOJOIN){await acceptJoin();return;}
+  try{
+    const snap=await firebase.firestore().collection("groups").doc(PENDING).get();
+    if(!snap.exists){toast("這個邀請已經失效了（群組可能被刪除）");clearPending();return;}
+    PENDING_NAME=(snap.data()||{}).name||"";
+  }catch(e){console.warn(e);}
+  renderJoinCard();
 }
 async function leaveGroup(){
   if(!uid||!CURGROUP)return;
@@ -323,10 +395,13 @@ function showCode(){
   const g=MYGROUPS.find(x=>x.id===CURGROUP);
   prompt("「"+(g?g.name:"")+"」的邀請碼（傳給想一起讀的人）：",CURGROUP);
 }
+// openExternalBrowser=1：LINE 內點連結改用手機預設瀏覽器開（LINE 內建瀏覽器會被 Google 擋登入）
+function inviteLink(code){return SITE+"?join="+encodeURIComponent(code||CURGROUP)+"&openExternalBrowser=1";}
 function inviteText(){
   const g=MYGROUPS.find(x=>x.id===CURGROUP);
   return "一個人走得快，一群人走得遠 📚\n邀請你加入「"+(g?g.name:"")+"」，一起把 66 卷聖經點亮。\n"
-    +"1. 打開 https://daily-bread.launchdock.app/journey.html\n2. Google 登入 → 按「輸入邀請碼加入」\n3. 邀請碼："+CURGROUP;
+    +"👉 點這裡加入："+inviteLink()+"\n"
+    +"（連結打不開的話：到 "+SITE+" 按「輸入邀請碼加入」，邀請碼 "+CURGROUP+"）";
 }
 async function copyCode(){
   if(!CURGROUP)return;

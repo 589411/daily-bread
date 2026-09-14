@@ -477,6 +477,11 @@ groups/{groupId}/members/{uid}
   - 資料：`groups/{gid}.reading = {"b<id>": {<uid>: expiresAt}}`，寫入用 `update("reading.bN.<uid>")`，取消用 `FieldValue.delete()`；
     個人側存 `users/{uid}.journeyReading = [{id,exp}]`——**刻意用陣列不用 map**：`set(merge:true)` 會深層合併 map，取消的 key 永遠刪不掉。
   - 讀完該卷、退出群組都會清掉自己的標記；登入時 `pruneReading()` 清自己過期的。只有登入且有群組時才出現按鈕。
+- **邀請連結（2026-09-15）**：`journey.html?join=CODE&openExternalBrowser=1`。
+  - `openExternalBrowser=1` 是 LINE 官方參數：在 LINE 裡點連結改用手機預設瀏覽器開——**LINE 內建瀏覽器會被 Google 擋登入（403 disallowed_useragent）**，這是加入流程最大的卡點，不是邀請碼。
+  - 進站 `readJoinParam()` 把 code 存 `localStorage.journeyPendingJoin`（登入過程重載也不掉）並清掉網址參數；頂部 `#joinCard` 顯示邀請。
+  - 未登入按「用 Google 登入並加入」→ 登入完成自動加入；**已登入則要按一次「加入群組」**（不做開連結就默默入群）；已是成員直接切過去；群組不存在就清掉邀請。
+  - 邀請訊息／分享到 LINE／建群後的提示都改送連結，邀請碼保留當備援。測試：`tools/test_journey_invite.py`（19 項）。
 - **點書名 → 開經文**（`index.html?ref=簡稱1`，單章書只帶簡稱）；只有點勾選框才算完成，點其他地方展開導論。
 - **只會加分，不會扣分。** 沒讀完不會有任何催促、紅字、落後提示，那一格就只是還沒亮。
 - **看板不顯示是誰讀的。** 但要誠實：**小群組沒有真正的匿名**（兩個人的群組裡「有人讀過」必然是對方），
