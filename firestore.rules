@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// 每日靈糧 Firestore 安全規則
+// ─────────────────────────────────────────────────────────────
+// 部署方式：Firebase Console → Firestore Database → 規則 → 貼上 → 發布
+// （這份檔案放在 repo 只是版本紀錄，貼到 Console 才會生效）
+//
+// ⚠️ 使用前必做一件事：把下面 ADMIN_UID 換成你自己的 Google 帳號 uid。
+//    取得方法：用 Google 登入 admin.html，畫面上會顯示你的 uid。
+//    沒換的話，admin.html 會因為不能列出 users 集合而整個看不到資料。
+// ─────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // ⚠️ 換成你的 uid
+    function isAdmin() {
+      return signedIn() && request.auth.uid == 'ADMIN_UID';
+    }
+
+    // ── 個人資料：一年讀經進度、書卷旅程進度、所屬群組 ──
+    // 一般人只能讀寫自己那一份；只有後台能列出全部。
+    match /users/{userId} {
+      allow get:   if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow list:  if isAdmin();
+      allow write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // ── 同步碼（year.html 既有機制，匿名登入也會用到）──
+    // 設計上「知道碼的人就能用」，所以不綁 uid；但不開放列舉。
+    match /codes/{code} {
+      allow get, write: if signedIn();
+      allow list:       if isAdmin();
+    }
+
+    // ── 群組（書卷旅程的集體點燈）──
+    // groupId 本身就是 8 碼邀請碼，等於「知道碼才進得來」。
+    // 開放 get 但禁止 list，避免有人把所有群組撈出來。
+    match /groups/{groupId} {
+      allow get:    if signedIn();
+      allow list:   if isAdmin();
+
+      allow create: if signedIn()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 40;
+
+      // 加入群組、點燈、退出都走 update。
+      // 允許成員改 coverage / memberCount，但不得竄改群組名稱與擁有者。
+      allow update: if signedIn()
+                    && request.resource.data.ownerUid == resource.data.ownerUid
+                    && request.resource.data.name == resource.data.name;
+
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+
+      // 成員名單：只能讀寫自己那一筆（App 不需要列出成員）
+      match /members/{userId} {
+        allow read, write: if signedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}

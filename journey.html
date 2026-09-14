@@ -24,18 +24,25 @@ main{max-width:820px;margin:0 auto;padding:16px}
 .hero{background:linear-gradient(135deg,var(--sur),var(--sur2))}
 h2{font-size:14px;color:var(--acc2);margin-bottom:10px;font-weight:700}
 p.muted{color:var(--tx2);font-size:13px;line-height:1.7;margin-bottom:8px}
-.bar{height:10px;background:var(--bdr);border-radius:6px;overflow:hidden;margin:10px 0 8px}
+.bar{height:10px;background:var(--bdr);border-radius:6px;overflow:hidden}
 .bar>i{display:block;height:100%;background:var(--acc3);width:0;transition:width .3s}
-.stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--tx2);margin-top:4px}
+.bar>i.c2{background:var(--acc2)}
+.prow{display:flex;align-items:center;gap:10px;margin:9px 0}
+.plabel{font-size:12px;color:var(--tx2);min-width:132px}
+.plabel b{color:var(--tx);font-size:13px}
+.prow .bar{flex:1}
+.ppct{font-size:13.5px;font-weight:700;color:var(--tx);min-width:48px;text-align:right}
+.stats{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--tx2);margin-top:4px}
 .stat{background:var(--sur2);border-radius:8px;padding:8px 12px;flex:1;min-width:90px;text-align:center}
 .stat b{color:var(--tx);font-size:16px;display:block}
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .badge{font-size:11.5px;padding:6px 11px;border-radius:14px;border:1px solid var(--bdr);color:var(--tx2);background:var(--sur2)}
 .badge.on{background:var(--gold);color:#3a2c00;border-color:var(--gold);font-weight:700}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
 .qbtn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx2);border-radius:6px;padding:9px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:38px}
 .qbtn:hover{border-color:var(--acc);color:var(--acc)}
 .qbtn.pri{background:var(--acc3);color:#06281c;border-color:var(--acc3);font-weight:700}
+:root[data-theme="light"] .qbtn.pri{color:#fff}
 select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;min-height:40px}
 .grp-h{font-size:13px;color:var(--acc2);font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
 .grp-h:first-child{margin-top:0}
@@ -43,6 +50,7 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .book-h{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;min-height:52px}
 .book-h:hover{background:var(--sur2)}
 .book.done .book-h{opacity:.6}
+.book.flash{box-shadow:0 0 0 2px var(--acc3)}
 .chk{width:22px;height:22px;flex-shrink:0;accent-color:var(--acc3)}
 .bname{font-size:14.5px;font-weight:700;flex:1}
 .bname.done{text-decoration:line-through}
@@ -52,9 +60,27 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .book-b p{font-size:13px;line-height:1.75;color:var(--tx);padding-top:10px}
 .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--acc2);color:#fff;margin-left:4px}
 .tag.short{background:var(--acc3);color:#06281c}
+.tag.gap{background:var(--gold);color:#3a2c00}
 .suggest{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:10px;padding:12px;margin-bottom:14px;display:none}
 .suggest b{color:var(--acc3)}
+.syncbar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:12px;color:var(--tx2);flex-wrap:wrap}
+.syncbtn{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;min-height:36px}
+.syncbtn:hover{border-color:var(--acc)}
+.syncdot{width:7px;height:7px;border-radius:50%;background:var(--tx2);display:inline-block;flex-shrink:0}
+.syncdot.on{background:var(--acc3)}
+.gmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:5px;margin-top:12px}
+.gcell{background:var(--sur2);border:1px solid var(--bdr);border-radius:6px;padding:6px 2px;text-align:center;font-size:10.5px;color:var(--tx2);cursor:pointer;line-height:1.3;min-height:36px;display:flex;align-items:center;justify-content:center}
+.gcell:hover{border-color:var(--acc)}
+.gcell.on{background:var(--acc3);border-color:var(--acc3);color:#06281c;font-weight:700}
+:root[data-theme="light"] .gcell.on{color:#fff}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc3);color:#06281c;padding:12px 22px;border-radius:8px;font-weight:700;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+:root[data-theme="light"] .toast{color:#fff}
+.toast.show{opacity:1}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:5px}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <header>
@@ -62,16 +88,28 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
   <button id="themeBtn" class="themebtn" onclick="toggleTheme()" aria-label="切換深淺色主題">☀️</button>
 </header>
 <main>
+  <div class="syncbar" id="syncBar"><span class="syncdot"></span>進度存在這台裝置</div>
+
   <div class="block hero">
     <h2>走一步算一步，不用一年讀完</h2>
     <p class="muted">這不是限時的讀經計畫，是一份陪你走完 66 卷書的地圖。想快想慢都可以，中間停多久都能接著走——進度只看你「完成了幾卷」，跟時間無關。</p>
-    <div class="bar"><i id="barFill"></i></div>
-    <div class="stats">
-      <div class="stat"><b id="stDone">0/66</b>已完成書卷</div>
-      <div class="stat"><b id="stPct">0%</b>整體進度</div>
-      <div class="stat"><b id="stChars">0</b>已讀約幾字</div>
+    <div class="prow">
+      <span class="plabel">書卷 <b id="stDone">0/66</b></span>
+      <div class="bar"><i id="barBooks"></i></div>
+      <span class="ppct" id="stPct">0%</span>
     </div>
+    <div class="prow">
+      <span class="plabel">字數 <b id="stChars">0</b></span>
+      <div class="bar"><i id="barChars" class="c2"></i></div>
+      <span class="ppct" id="stCharPct">0%</span>
+    </div>
+    <p class="muted" style="font-size:11.5px;margin:2px 0 0">兩條一起看：短卷讀得多，上面那條會跑得比下面快；真正把長卷啃完，下面那條才會動。</p>
     <div class="badges" id="badges"></div>
+  </div>
+
+  <div class="block">
+    <h2>🔥 一起點亮 66 卷</h2>
+    <div id="groupBody"></div>
   </div>
 
   <div class="suggest" id="suggestBox">
@@ -88,6 +126,7 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
     </select>
     <div class="toolbar">
       <button class="qbtn pri" onclick="suggestEasy()">🎯 幫我挑一本現在能完成的</button>
+      <button class="qbtn" onclick="importFromYear()">📅 從一年讀經計畫匯入</button>
       <button class="qbtn" onclick="exportProgress()">⬇ 匯出我的進度</button>
       <button class="qbtn" onclick="document.getElementById('importFile').click()">⬆ 匯入進度</button>
       <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importProgress(event)">
@@ -98,43 +137,250 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
     <div id="bookList"></div>
   </div>
 </main>
+<div class="toast" id="toast"></div>
 
 <script>
 const fmtN=n=>n.toLocaleString("en-US");
-let DATA=null, DONE=new Set();
-const STORE_KEY="journeyDoneBooks"; // 存 book id 陣列
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const FIREBASE_CONFIG={apiKey:"AIzaSyDjlL_b4Uiz0cAQjbdCiePZO9oXrEQm0zI",authDomain:"daily-bread-f88ac.firebaseapp.com",projectId:"daily-bread-f88ac",storageBucket:"daily-bread-f88ac.firebasestorage.app",messagingSenderId:"258444297032",appId:"1:258444297032:web:2287e0259ef81a0ca0a97d"};
+const STORE_KEY="journeyDoneBooks"; // 本地備份：book id 陣列
+const YEAR_SIG="year365";           // 與 year.html 共用的進度鍵名
 
-function loadDone(){try{return new Set(JSON.parse(localStorage.getItem(STORE_KEY)||"[]"));}catch(e){return new Set();}}
-function saveDone(){localStorage.setItem(STORE_KEY,JSON.stringify([...DONE]));}
+let DATA=null, DONE=new Set(), ALLCHARS=0;
+let uid=null, userLabel="", cloudReady=false;
+let MYGROUPS=[], CURGROUP="", GDOC=null, LIT=new Set();
+
+function loadLocal(){try{return new Set((JSON.parse(localStorage.getItem(STORE_KEY)||"[]")).map(Number));}catch(e){return new Set();}}
+function saveLocal(){try{localStorage.setItem(STORE_KEY,JSON.stringify([...DONE]));}catch(e){}}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
 
 async function boot(){
   DATA=await fetch("data/book_journey.json").then(r=>r.json());
-  DONE=loadDone();
-  render();
+  ALLCHARS=DATA.books.reduce((s,b)=>s+b.totalChars,0);
+  DONE=loadLocal();
+  render();renderGroups();
+  initCloud();
 }
 
+/* ────────── 雲端：個人進度 ────────── */
+function initCloud(){
+  updateSyncUI();
+  if(!window.firebase)return;
+  try{firebase.initializeApp(FIREBASE_CONFIG);cloudReady=true;}catch(e){console.warn("Firebase init 失敗",e);return;}
+  firebase.auth().onAuthStateChanged(async u=>{
+    if(u&&!u.isAnonymous){
+      uid=u.uid;userLabel=u.email||u.displayName||"Google";
+      try{await pullUser();}catch(e){console.warn(e);}
+    }else{
+      uid=null;userLabel="";MYGROUPS=[];CURGROUP="";GDOC=null;
+    }
+    updateSyncUI();render();renderGroups();
+  });
+}
+function cloudSignIn(){
+  if(!cloudReady){alert("雲端尚未設定");return;}
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>alert("登入失敗："+e.message));
+}
+function cloudSignOut(){if(cloudReady)firebase.auth().signOut();}
+
+// 首次登入：本地與雲端取「聯集」，兩邊的紀錄都不會被蓋掉
+async function pullUser(){
+  const db=firebase.firestore();
+  const snap=await db.collection("users").doc(uid).get();
+  const d=snap.exists?(snap.data()||{}):{};
+  const cloud=Array.isArray(d.journeyBooks)?d.journeyBooks.map(Number):[];
+  const before=DONE.size;
+  cloud.forEach(id=>DONE.add(id));
+  saveLocal();
+  if(DONE.size!==cloud.length||DONE.size!==before)await pushUser();
+  MYGROUPS=[];
+  const gids=Array.isArray(d.myGroups)?d.myGroups:[];
+  for(const gid of gids){
+    try{
+      const gs=await db.collection("groups").doc(gid).get();
+      if(gs.exists)MYGROUPS.push({id:gid,name:(gs.data()||{}).name||gid});
+    }catch(e){console.warn("讀取群組失敗",gid,e);}
+  }
+  if(MYGROUPS.length&&!MYGROUPS.some(g=>g.id===CURGROUP))CURGROUP=MYGROUPS[0].id;
+  if(CURGROUP)await loadGroup(CURGROUP);
+}
+// merge:true 很重要：不能蓋掉 year.html 寫在同一份文件裡的 progress / profile
+async function pushUser(){
+  if(!uid||!cloudReady)return;
+  await firebase.firestore().collection("users").doc(uid).set({
+    journeyBooks:[...DONE],journeyUpdatedAt:Date.now(),ts:Date.now()
+  },{merge:true});
+}
+function updateSyncUI(){
+  const bar=document.getElementById("syncBar");if(!bar)return;
+  if(!cloudReady){bar.innerHTML='<span class="syncdot"></span>進度存在這台裝置';return;}
+  if(uid)bar.innerHTML='<span class="syncdot on"></span>已登入：'+esc(userLabel)+' <button class="syncbtn" onclick="cloudSignOut()">登出</button>';
+  else bar.innerHTML='<span class="syncdot"></span>進度只存在這台裝置 <button class="syncbtn" onclick="cloudSignIn()">☁ Google 登入以跨裝置同步</button>';
+}
+
+/* ────────── 群組：個人進度是全域的，群組只是不同的觀看視角 ────────── */
+function genCode(n){const s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:n},()=>s[Math.floor(Math.random()*s.length)]).join("");}
+function litSet(){
+  const s=new Set();
+  if(GDOC&&GDOC.coverage)Object.keys(GDOC.coverage).forEach(k=>{
+    const arr=GDOC.coverage[k];
+    if(Array.isArray(arr)&&arr.length)s.add(Number(String(k).replace(/^b/,"")));
+  });
+  return s;
+}
+async function loadGroup(gid){
+  if(!cloudReady||!gid){GDOC=null;return;}
+  try{
+    const snap=await firebase.firestore().collection("groups").doc(gid).get();
+    GDOC=snap.exists?(snap.data()||{}):null;
+  }catch(e){console.warn(e);GDOC=null;}
+}
+async function switchGroup(gid){CURGROUP=gid;await loadGroup(gid);renderGroups();render();}
+
+async function createGroup(){
+  if(!uid){alert("請先用 Google 登入才能建立群組");return;}
+  const name=(prompt("群組名稱（例如：公司團契、青年小組）：")||"").trim();
+  if(!name)return;
+  const db=firebase.firestore(), gid=genCode(8);
+  const coverage={};
+  [...DONE].forEach(id=>{coverage["b"+id]=[uid];});
+  try{
+    await db.collection("groups").doc(gid).set({name,ownerUid:uid,createdAt:Date.now(),memberCount:1,coverage});
+    await db.collection("groups").doc(gid).collection("members").doc(uid).set({name:userLabel,joinedAt:Date.now()});
+    await db.collection("users").doc(uid).set({myGroups:firebase.firestore.FieldValue.arrayUnion(gid)},{merge:true});
+  }catch(e){alert("建立失敗："+e.message);return;}
+  MYGROUPS.push({id:gid,name});CURGROUP=gid;
+  await loadGroup(gid);renderGroups();
+  prompt("群組「"+name+"」建立完成。\n把這組邀請碼傳到你的 LINE 群，大家輸入就能加入：",gid);
+}
+async function joinGroup(){
+  if(!uid){alert("請先用 Google 登入才能加入群組");return;}
+  const code=(prompt("輸入邀請碼：")||"").trim().toUpperCase();
+  if(!code)return;
+  const db=firebase.firestore(), ref=db.collection("groups").doc(code);
+  let snap;
+  try{snap=await ref.get();}catch(e){alert("查詢失敗："+e.message);return;}
+  if(!snap.exists){alert("找不到這組邀請碼，請再確認一次。");return;}
+  if(MYGROUPS.some(g=>g.id===code)){await switchGroup(code);toast("你已經在這個群組裡了");return;}
+  const FV=firebase.firestore.FieldValue;
+  const patch={memberCount:FV.increment(1)};
+  [...DONE].forEach(id=>{patch["coverage.b"+id]=FV.arrayUnion(uid);}); // 帶著自己讀過的書進來，立刻有貢獻
+  try{
+    await ref.update(patch);
+    await ref.collection("members").doc(uid).set({name:userLabel,joinedAt:Date.now()});
+    await db.collection("users").doc(uid).set({myGroups:FV.arrayUnion(code)},{merge:true});
+  }catch(e){alert("加入失敗："+e.message);return;}
+  MYGROUPS.push({id:code,name:(snap.data()||{}).name||code});
+  CURGROUP=code;await loadGroup(code);renderGroups();render();
+  toast("已加入群組");
+}
+async function leaveGroup(){
+  if(!uid||!CURGROUP)return;
+  const g=MYGROUPS.find(x=>x.id===CURGROUP);
+  if(!confirm("確定退出「"+(g?g.name:CURGROUP)+"」？\n你個人的讀經進度不會消失，只是不再算進這個群組。"))return;
+  const db=firebase.firestore(), FV=firebase.firestore.FieldValue, ref=db.collection("groups").doc(CURGROUP);
+  const patch={memberCount:FV.increment(-1)};
+  DATA.books.forEach(b=>{patch["coverage.b"+b.id]=FV.arrayRemove(uid);});
+  try{
+    await ref.update(patch);
+    await ref.collection("members").doc(uid).delete();
+    await db.collection("users").doc(uid).set({myGroups:FV.arrayRemove(CURGROUP)},{merge:true});
+  }catch(e){console.warn(e);}
+  MYGROUPS=MYGROUPS.filter(x=>x.id!==CURGROUP);
+  CURGROUP=MYGROUPS.length?MYGROUPS[0].id:"";GDOC=null;
+  if(CURGROUP)await loadGroup(CURGROUP);
+  renderGroups();render();
+}
+function showCode(){
+  if(!CURGROUP)return;
+  const g=MYGROUPS.find(x=>x.id===CURGROUP);
+  prompt("「"+(g?g.name:"")+"」的邀請碼（傳給想一起讀的人）：",CURGROUP);
+}
+// 完成／取消一卷時，同步更新自己所屬的每一個群組
+async function updateCoverageAll(bookId,on){
+  if(!uid||!cloudReady||!MYGROUPS.length)return;
+  const db=firebase.firestore(), FV=firebase.firestore.FieldValue;
+  const patch={};
+  patch["coverage.b"+bookId]=on?FV.arrayUnion(uid):FV.arrayRemove(uid);
+  await Promise.all(MYGROUPS.map(g=>db.collection("groups").doc(g.id).update(patch).catch(e=>console.warn(e))));
+}
+
+function renderGroups(){
+  const box=document.getElementById("groupBody");if(!box)return;
+  if(!cloudReady){box.innerHTML='<p class="muted">雲端尚未設定，群組功能無法使用。</p>';return;}
+  if(!uid){
+    box.innerHTML='<p class="muted">和一群人一起，把 66 卷書全部點亮——每一卷只要有<b>一個人</b>讀完就會亮起來。看板只顯示哪幾卷亮了，不會列出是誰讀的。</p>'
+      +'<div class="toolbar"><button class="qbtn pri" onclick="cloudSignIn()">☁ Google 登入</button></div>';
+    return;
+  }
+  if(!MYGROUPS.length){
+    box.innerHTML='<p class="muted">你還沒有加入任何群組。建立一個，把邀請碼傳到你的 LINE 群，就能一起點燈。<br>'
+      +'<b>你目前已讀完的 '+DONE.size+' 卷，會立刻幫新群組點亮 '+DONE.size+' 格。</b></p>'
+      +'<div class="toolbar"><button class="qbtn pri" onclick="createGroup()">＋ 建立群組</button><button class="qbtn" onclick="joinGroup()">輸入邀請碼加入</button></div>';
+    return;
+  }
+  const lit=litSet(), total=DATA.books.length;
+  const litChars=DATA.books.filter(b=>lit.has(b.id)).reduce((s,b)=>s+b.totalChars,0);
+  let h="";
+  if(MYGROUPS.length>1){
+    h+='<select onchange="switchGroup(this.value)" style="margin-bottom:4px">'
+      +MYGROUPS.map(g=>'<option value="'+esc(g.id)+'"'+(g.id===CURGROUP?' selected':'')+'>'+esc(g.name)+'</option>').join("")+'</select>';
+  }else{
+    h+='<p class="muted" style="margin-bottom:4px"><b>'+esc(MYGROUPS[0].name)+'</b></p>';
+  }
+  h+='<div class="stats">'
+    +'<div class="stat"><b>'+lit.size+'/'+total+'</b>已點亮書卷</div>'
+    +'<div class="stat"><b>'+(Math.round(litChars/ALLCHARS*1000)/10)+'%</b>字數覆蓋</div>'
+    +'<div class="stat"><b>'+((GDOC&&GDOC.memberCount)||1)+'</b>一起讀的人</div></div>';
+  const remain=total-lit.size;
+  h+=remain===0
+    ? '<p class="muted" style="margin-top:12px;color:var(--acc3)"><b>🏆 66 卷全部點亮了——這個群組一起讀完了整本聖經。</b></p>'
+    : '<p class="muted" style="margin-top:12px">還有 <b>'+remain+'</b> 卷沒有人讀過。點一下灰色格子可以跳到那一卷。</p>';
+  h+='<div class="gmap">'+DATA.books.slice().sort((a,b)=>a.id-b.id).map(b=>
+      '<div class="gcell'+(lit.has(b.id)?' on':'')+'" title="'+esc(b.full)+(lit.has(b.id)?'：已點亮':'：還沒有人讀過')+'" onclick="jumpToBook('+b.id+')">'+esc(b.abbr||b.full)+'</div>'
+    ).join("")+'</div>';
+  h+='<div class="toolbar"><button class="qbtn" onclick="showCode()">🔢 顯示邀請碼</button>'
+    +'<button class="qbtn" onclick="createGroup()">＋ 另外建一個</button>'
+    +'<button class="qbtn" onclick="joinGroup()">加入其他群組</button>'
+    +'<button class="qbtn" onclick="leaveGroup()">退出這個群組</button></div>';
+  box.innerHTML=h;
+}
+function jumpToBook(id,retried){
+  const el=document.querySelector('[data-book="'+id+'"]');
+  if(!el){
+    if(retried)return;
+    document.getElementById("orderSel").value="canon";render();
+    setTimeout(()=>jumpToBook(id,true),60);return;
+  }
+  el.scrollIntoView({behavior:"smooth",block:"center"});
+  el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1600);
+}
+
+/* ────────── 個人清單 ────────── */
 function sortedBooks(order){
   const books=DATA.books.slice();
-  if(order==="canon")return books.sort((a,b)=>a.id-b.id);
   if(order==="chron")return books.sort((a,b)=>a.chronOrder-b.chronOrder);
   if(order==="easy")return books.sort((a,b)=>a.totalChars-b.totalChars);
-  return books.sort((a,b)=>a.id-b.id); // category 排序另外處理分組
+  return books.sort((a,b)=>a.id-b.id);
 }
-
 function render(){
   const order=document.getElementById("orderSel").value;
+  LIT=litSet(); // 每次重繪算一次就好，書列不用逐卷重算
   const total=DATA.books.length, doneCount=DONE.size;
-  document.getElementById("barFill").style.width=(doneCount/total*100)+"%";
-  document.getElementById("stDone").textContent=doneCount+"/"+total;
-  document.getElementById("stPct").textContent=Math.round(doneCount/total*100)+"%";
   const doneChars=DATA.books.filter(b=>DONE.has(b.id)).reduce((s,b)=>s+b.totalChars,0);
-  document.getElementById("stChars").textContent=fmtN(doneChars);
+  const bookPct=Math.round(doneCount/total*1000)/10;
+  const charPct=Math.round(doneChars/ALLCHARS*1000)/10;
+  document.getElementById("barBooks").style.width=bookPct+"%";
+  document.getElementById("barChars").style.width=charPct+"%";
+  document.getElementById("stDone").textContent=doneCount+"/"+total;
+  document.getElementById("stPct").textContent=bookPct+"%";
+  document.getElementById("stChars").textContent=fmtN(doneChars)+" / "+fmtN(ALLCHARS);
+  document.getElementById("stCharPct").textContent=charPct+"%";
   renderBadges();
 
   const list=document.getElementById("bookList");
   list.innerHTML="";
   const frag=document.createDocumentFragment();
-
   if(order==="category"){
     DATA.categories.forEach(cat=>{
       const h=document.createElement("div");h.className="grp-h";h.textContent=cat;frag.appendChild(h);
@@ -145,73 +391,118 @@ function render(){
   }
   list.appendChild(frag);
 }
-
 function shortTag(b){
-  // 全書字數在最短 15 名內，標示「易讀」
   const sorted=DATA.books.slice().sort((a,b2)=>a.totalChars-b2.totalChars);
-  const idx=sorted.findIndex(x=>x.id===b.id);
-  return idx<15;
+  return sorted.findIndex(x=>x.id===b.id)<15;
 }
-
 function bookRow(b){
-  const isDone=DONE.has(b.id);
-  const easy=shortTag(b);
+  const isDone=DONE.has(b.id), easy=shortTag(b);
+  const isGap=MYGROUPS.length&&!LIT.has(b.id); // 群組還沒有人讀過
   const div=document.createElement("div");
   div.className="book"+(isDone?" done":"");
+  div.setAttribute("data-book",b.id);
   div.innerHTML='<div class="book-h">'
-    +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記'+b.full+'完成">'
-    +'<span class="bname'+(isDone?' done':'')+'">'+b.full+(easy?'<span class="tag short">易讀</span>':'')+'</span>'
+    +'<input type="checkbox" class="chk" '+(isDone?'checked':'')+' aria-label="標記'+esc(b.full)+'完成">'
+    +'<span class="bname'+(isDone?' done':'')+'">'+esc(b.full)
+      +(easy?'<span class="tag short">易讀</span>':'')
+      +(isGap?'<span class="tag gap">群組還沒人讀</span>':'')
+    +'</span>'
     +'<span class="bmeta">'+b.chapters+'章・約'+fmtN(b.totalChars)+'字</span>'
-    +'</div><div class="book-b"><p>'+b.intro+'</p></div>';
+    +'</div><div class="book-b"><p>'+esc(b.intro)+'</p></div>';
   const chk=div.querySelector(".chk"), head=div.querySelector(".book-h"), body=div.querySelector(".book-b");
-  chk.onclick=e=>{
-    e.stopPropagation();
-    chk.checked?DONE.add(b.id):DONE.delete(b.id);
-    saveDone();render();
-  };
+  chk.onclick=e=>{e.stopPropagation();toggleBook(b.id,chk.checked);};
   head.onclick=()=>body.classList.toggle("open");
   return div;
 }
+async function toggleBook(id,on){
+  on?DONE.add(id):DONE.delete(id);
+  saveLocal();render();
+  if(!uid||!cloudReady)return;
+  try{
+    await pushUser();
+    await updateCoverageAll(id,on);
+    if(CURGROUP){await loadGroup(CURGROUP);renderGroups();render();}
+  }catch(e){console.warn(e);}
+}
 
-// ── 成就徽章（依累積完成度計算，純鼓勵，沒有排名）──
 function renderBadges(){
   const doneBooks=DATA.books.filter(b=>DONE.has(b.id));
   const total=DATA.books.length;
   const easyIds=new Set(DATA.books.slice().sort((a,b)=>a.totalChars-b.totalChars).slice(0,10).map(b=>b.id));
+  const doneChars=doneBooks.reduce((s,b)=>s+b.totalChars,0);
   const badgeDefs=[
-    {key:"first", label:"🚀 跨出第一步", on: doneBooks.length>=1},
-    {key:"ten", label:"📖 讀完 10 卷", on: doneBooks.length>=10},
-    {key:"half", label:"🌗 過半（33 卷）", on: doneBooks.length>=33},
-    {key:"easy10", label:"🌱 短卷收集家", on: [...easyIds].every(id=>DONE.has(id))},
-    {key:"law", label:"📜 律法書通關", on: DATA.categories.includes("律法書")&&DATA.books.filter(b=>b.category==="律法書").every(b=>DONE.has(b.id))},
-    {key:"hist", label:"🏛 歷史書通關", on: DATA.books.filter(b=>b.category==="歷史書").every(b=>DONE.has(b.id))},
-    {key:"wisdom", label:"🕊 智慧書通關", on: DATA.books.filter(b=>b.category==="智慧書").every(b=>DONE.has(b.id))},
-    {key:"proph", label:"🔥 先知書通關", on: DATA.books.filter(b=>b.category==="先知書").every(b=>DONE.has(b.id))},
-    {key:"nt", label:"✝️ 新約通關", on: DATA.books.filter(b=>b.category==="新約").every(b=>DONE.has(b.id))},
-    {key:"all", label:"🏆 全本聖經完成", on: doneBooks.length>=total},
+    {label:"🚀 跨出第一步", on: doneBooks.length>=1},
+    {label:"📖 讀完 10 卷", on: doneBooks.length>=10},
+    {label:"🌗 書卷過半（33 卷）", on: doneBooks.length>=33},
+    {label:"🐘 啃完一本大部頭", on: doneBooks.some(b=>b.totalChars>=40000)},
+    {label:"⚖️ 字數過半", on: doneChars>=ALLCHARS/2},
+    {label:"🌱 短卷收集家", on: [...easyIds].every(id=>DONE.has(id))},
+    {label:"📜 律法書通關", on: DATA.books.filter(b=>b.category==="律法書").every(b=>DONE.has(b.id))},
+    {label:"🏛 歷史書通關", on: DATA.books.filter(b=>b.category==="歷史書").every(b=>DONE.has(b.id))},
+    {label:"🕊 智慧書通關", on: DATA.books.filter(b=>b.category==="智慧書").every(b=>DONE.has(b.id))},
+    {label:"🔥 先知書通關", on: DATA.books.filter(b=>b.category==="先知書").every(b=>DONE.has(b.id))},
+    {label:"✝️ 新約通關", on: DATA.books.filter(b=>b.category==="新約").every(b=>DONE.has(b.id))},
+    {label:"🏆 全本聖經完成", on: doneBooks.length>=total},
   ];
-  const box=document.getElementById("badges");
-  box.innerHTML=badgeDefs.map(d=>'<span class="badge'+(d.on?' on':'')+'">'+d.label+'</span>').join("");
+  document.getElementById("badges").innerHTML=badgeDefs.map(d=>'<span class="badge'+(d.on?' on':'')+'">'+d.label+'</span>').join("");
 }
 
-// ── 卡關時：推薦目前還沒讀、字數最少的一卷 ──
+/* ────────── 推薦：有群組時優先補「還沒人讀過」的空白 ────────── */
 function suggestEasy(){
-  const undone=DATA.books.filter(b=>!DONE.has(b.id)).sort((a,b)=>a.totalChars-b.totalChars);
   const box=document.getElementById("suggestBox"), txt=document.getElementById("suggestText");
-  if(!undone.length){box.style.display="none";return;}
-  const b=undone[0];
-  txt.innerHTML='<b>'+b.full+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，現在很適合先完成它。';
+  const mine=DATA.books.filter(b=>!DONE.has(b.id));
+  if(!mine.length){txt.innerHTML="你已經把 66 卷都讀完了。🏆";box.style.display="";return;}
+  const lit=litSet();
+  const gap=MYGROUPS.length?mine.filter(b=>!lit.has(b.id)):[];
+  const pool=(gap.length?gap:mine).slice().sort((a,b)=>a.totalChars-b.totalChars);
+  const b=pool[0];
+  txt.innerHTML=gap.length
+    ? '<b>'+esc(b.full)+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，而且<b>你的群組還沒有人讀過這一卷</b>——讀完就能幫大家點亮一格。'
+    : '<b>'+esc(b.full)+'</b>只有 '+b.chapters+' 章、約 '+fmtN(b.totalChars)+' 字，現在很適合先完成它。';
   box.style.display="";
-  // 順便捲到那一本
   document.getElementById("orderSel").value="easy";render();
-  setTimeout(()=>{
-    const rows=[...document.querySelectorAll("#bookList .book")];
-    const idx=DATA.books.slice().sort((a,c)=>a.totalChars-c.totalChars).findIndex(x=>x.id===b.id);
-    if(rows[idx])rows[idx].scrollIntoView({behavior:"smooth",block:"center"});
-  },50);
+  setTimeout(()=>jumpToBook(b.id),60);
 }
 
-// ── 進度備份（沒有雲端同步，先用檔案匯出匯入）──
+/* ────────── 從一年讀經計畫匯入（一次性動作，匯入後可自由取消） ────────── */
+async function importFromYear(){
+  let days=null;
+  if(uid&&cloudReady){
+    try{
+      const snap=await firebase.firestore().collection("users").doc(uid).get();
+      const d=snap.exists?(snap.data()||{}):{};
+      if(d.progress&&Array.isArray(d.progress[YEAR_SIG]))days=d.progress[YEAR_SIG];
+    }catch(e){console.warn(e);}
+  }
+  if(!days){try{const raw=localStorage.getItem(YEAR_SIG);if(raw)days=JSON.parse(raw);}catch(e){}}
+  if(!days||!days.length){alert("找不到一年讀經計畫的進度紀錄。\n先到「一年讀經」頁面勾選幾天，或用同一個 Google 帳號登入。");return;}
+  let plan;
+  try{plan=await fetch("data/year_plan.json").then(r=>r.json());}catch(e){alert("讀不到 year_plan.json");return;}
+  const chapters=new Set();
+  days.forEach(i=>{const day=plan.days[i];if(Array.isArray(day))day.forEach(c=>chapters.add(c));});
+  const added=[];
+  DATA.books.forEach(b=>{
+    if(DONE.has(b.id))return;
+    let all=true;
+    for(let c=1;c<=b.chapters;c++){
+      const key=(b.chapters===1)?b.full:(b.full+c);
+      if(!chapters.has(key)){all=false;break;}
+    }
+    if(all){DONE.add(b.id);added.push(b);}
+  });
+  if(!added.length){alert("一年讀經計畫裡目前還沒有任何一卷「整卷」讀完，所以沒有可以匯入的書卷。");return;}
+  saveLocal();render();
+  if(uid&&cloudReady){
+    try{
+      await pushUser();
+      for(const b of added)await updateCoverageAll(b.id,true);
+      if(CURGROUP){await loadGroup(CURGROUP);renderGroups();render();}
+    }catch(e){console.warn(e);}
+  }
+  alert("已匯入 "+added.length+" 卷：\n"+added.map(b=>b.full).join("、"));
+}
+
+/* ────────── 檔案備份 ────────── */
 function exportProgress(){
   const blob=new Blob([JSON.stringify({done:[...DONE],exportedAt:new Date().toISOString()},null,2)],{type:"application/json"});
   const a=document.createElement("a");
@@ -220,10 +511,14 @@ function exportProgress(){
 function importProgress(ev){
   const file=ev.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=()=>{
+  reader.onload=async()=>{
     try{
       const d=JSON.parse(reader.result);
-      if(Array.isArray(d.done)){DONE=new Set(d.done);saveDone();render();alert("匯入完成");}
+      if(!Array.isArray(d.done)){alert("檔案格式不對");return;}
+      d.done.map(Number).forEach(id=>DONE.add(id)); // 聯集，不覆蓋
+      saveLocal();render();
+      if(uid&&cloudReady){await pushUser();for(const id of d.done.map(Number))await updateCoverageAll(id,true);if(CURGROUP){await loadGroup(CURGROUP);renderGroups();render();}}
+      alert("匯入完成");
     }catch(e){alert("檔案格式不對");}
   };
   reader.readAsText(file);
