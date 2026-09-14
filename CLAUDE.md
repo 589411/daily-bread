@@ -100,6 +100,9 @@
 ## 8. 技術備註
 
 - 經文 API：`https://bolls.life/get-text/CUV/{書卷編號}/{章}/`（**和合本＝CUV**，不是 CUNP；端點是 `/get-text/` 不是 `/api/`）。回傳 `[{verse,text}]`。書卷編號＝正典 1–66（與 `bible_books.json` 一致，代下＝14）。前端用 `fetchJson()` 依序試直連→allorigins→corsproxy；和合本字間有多餘空白，渲染時以 `replace(/[\s　]/g,'')` 清除。
+- **前一章／後一章**（2026-09-14）：`renderBible()` 在 BibleGateway 連結右邊加 `chNavBtns(p)`，`neighborCh()` 依 `bible_books.json` 正典書序跨卷
+  （創50→出1、瑪4→太1、單章書不帶章號），創1 無前、啟22 無後。`goChapter()` 同步選單＋`history.replaceState(?ref=)`，從每日進度按下會切到「閱讀聖經」。
+  `renderBible()` 用 `bibleArea.dataset.req` 擋掉較慢回來的舊回應（快速切章時會覆蓋新章，已踩過）。測試：`tools/test_chapter_nav.py`（需連 bolls）。
 - 影片縮圖：`https://i.ytimg.com/vi/{videoId}/hqdefault.jpg`。
 - 想取某影片標題可用免金鑰的 oEmbed：`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={id}&format=json`。
 - 速讀軌道是跨多章的範圍：除「開始讀經」連結外，`expandRange()` 會依正典書序把範圍（含同卷如 `羅4-8`、跨卷如 `徒27-羅3`）展開成各章，於 `<details>` 內列出每章第一遍影片（需 `bible_books.json` 的章數判斷換卷）。
