@@ -141,6 +141,16 @@ with sync_playwright() as p:
     check("myGroups 記錄群組", gid in (store.get("users/U1", {}).get("myGroups") or []),
           store.get("users/U1", {}).get("myGroups"))
 
+    # 4b. 邀請碼常駐在看板上（不是只在建群時跳一次），可複製、可分享到 LINE
+    page.evaluate("(async()=>{await loadGroup(CURGROUP);renderGroups();})()")
+    page.wait_for_timeout(300)
+    inv = page.locator("#groupBody .invite")
+    check("看板常駐顯示邀請碼", inv.count() == 1 and gid in inv.inner_text(), inv.inner_text() if inv.count() else "")
+    txt = page.evaluate("inviteText()")
+    check("邀請訊息含邀請碼與網址", gid in txt and "journey.html" in txt, txt[:40])
+    href = inv.locator("a.line").get_attribute("href") or ""
+    check("分享到 LINE 連結帶邀請碼", href.startswith("https://line.me/R/share?text=") and gid in href, href[:50])
+
     # 5. 再讀一卷 → update() 的 dotted path 必須真的寫成巢狀，不能變成字面欄位名
     page.evaluate(f"toggleBook({NAHUM['id']}, true)")
     page.wait_for_timeout(600)

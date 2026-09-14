@@ -84,6 +84,10 @@ select{background:var(--sur2);border:1px solid var(--bdr);color:var(--tx);border
 .gcell:hover{border-color:var(--acc)}
 .gcell.on{background:var(--acc3);border-color:var(--acc3);color:#06281c;font-weight:700}
 :root[data-theme="light"] .gcell.on{color:#fff}
+.invite{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--sur2);border:1px dashed var(--acc);border-radius:9px;padding:8px 10px;margin:4px 0 10px}
+.invite .muted{margin:0;font-size:12px}
+.icode{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:2px;color:var(--acc)}
+.qbtn.line{background:#06c755;border-color:#06c755;color:#fff;text-decoration:none;display:inline-flex;align-items:center}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc3);color:#06281c;padding:12px 22px;border-radius:8px;font-weight:700;font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
 :root[data-theme="light"] .toast{color:#fff}
 .toast.show{opacity:1}
@@ -319,6 +323,16 @@ function showCode(){
   const g=MYGROUPS.find(x=>x.id===CURGROUP);
   prompt("「"+(g?g.name:"")+"」的邀請碼（傳給想一起讀的人）：",CURGROUP);
 }
+function inviteText(){
+  const g=MYGROUPS.find(x=>x.id===CURGROUP);
+  return "一個人走得快，一群人走得遠 📚\n邀請你加入「"+(g?g.name:"")+"」，一起把 66 卷聖經點亮。\n"
+    +"1. 打開 https://daily-bread.launchdock.app/journey.html\n2. Google 登入 → 按「輸入邀請碼加入」\n3. 邀請碼："+CURGROUP;
+}
+async function copyCode(){
+  if(!CURGROUP)return;
+  try{await navigator.clipboard.writeText(inviteText());toast("已複製邀請訊息，貼到 LINE 就能邀請");}
+  catch(e){showCode();}
+}
 // 完成／取消一卷時，同步更新自己所屬的每一個群組
 async function updateCoverageAll(bookId,on){
   if(!uid||!cloudReady||!MYGROUPS.length)return;
@@ -402,6 +416,10 @@ function renderGroups(){
   }else{
     h+='<p class="muted" style="margin-bottom:4px"><b>'+esc(MYGROUPS[0].name)+'</b></p>';
   }
+  // 邀請碼常駐顯示：隨時可以再邀人
+  h+='<div class="invite"><span class="muted">邀請碼</span><b class="icode">'+esc(CURGROUP)+'</b>'
+    +'<button class="qbtn" onclick="copyCode()">📋 複製邀請</button>'
+    +'<a class="qbtn line" href="https://line.me/R/share?text='+encodeURIComponent(inviteText())+'" target="_blank" rel="noopener">分享到 LINE</a></div>';
   h+='<div class="stats">'
     +'<div class="stat"><b>'+lit.size+'/'+total+'</b>已點亮書卷</div>'
     +'<div class="stat"><b>'+(Math.round(litChars/ALLCHARS*1000)/10)+'%</b>字數覆蓋</div>'
@@ -415,7 +433,7 @@ function renderGroups(){
       return '<div class="gcell'+(on?' on':rd?' reading':'')+'" title="'+esc(b.full)+(on?'：已點亮':rd?'：有人正在讀':'：還沒有人讀過')+'" onclick="jumpToBook('+b.id+')">'+esc(b.abbr||b.full)+'</div>';
     }).join("")+'</div>'
     +'<p class="muted" style="font-size:11.5px;margin-top:6px">實心＝已點亮　虛線淺色＝有人正在讀（不是佔位，想一起讀也很好）。在下方書卷按「＋ 我在讀」，讓大家知道你走到哪。</p>';
-  h+='<div class="toolbar"><button class="qbtn" onclick="showCode()">🔢 顯示邀請碼</button>'
+  h+='<div class="toolbar">'
     +'<button class="qbtn" onclick="createGroup()">＋ 另外建一個</button>'
     +'<button class="qbtn" onclick="joinGroup()">加入其他群組</button>'
     +'<button class="qbtn" onclick="leaveGroup()">退出這個群組</button></div>';
