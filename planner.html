@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded',function(){var tb=document.getEleme
 body{background:var(--bg);color:var(--tx);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;min-height:100vh;padding-bottom:60px}
 header{background:linear-gradient(135deg,#1a1d27,#12152a);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .logo h1{font-size:15px;font-weight:700}
-.nav{display:flex;gap:6px;align-items:center}
+.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .nav a{font-size:12.5px;text-decoration:none;color:var(--tx2);padding:6px 14px;border-radius:18px;border:1.5px solid var(--bdr)}
 .nav a.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
 .themebtn{background:transparent;border:1.5px solid var(--bdr);color:var(--tx2);border-radius:18px;padding:6px 11px;font-size:13px;cursor:pointer;line-height:1;font-family:inherit}
@@ -102,7 +102,7 @@ input[type=number],input[type=date]{background:var(--bg);border:1px solid var(--
 <body>
 <header>
   <div class="logo"><h1>📖 每日靈糧（中靈版）</h1></div>
-  <div class="nav"><a href="index.html">每日進度</a><a href="index.html?read=1">閱讀聖經</a><a href="year.html">一年讀經</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></div>
+  <div class="nav"><a href="index.html">每日進度</a><a href="index.html?read=1">閱讀聖經</a><a href="year.html">一年讀經</a><a href="journey.html">組隊讀聖經</a><a href="planner.html" class="on">我的計畫</a><button id="fsBtn" class="themebtn" onclick="cycleFont()" title="字級大小" aria-label="調整字級大小">字</button><button id="themeBtn" class="themebtn" onclick="toggleTheme()" title="切換深／淺色" aria-label="切換深淺色主題">☀️</button></div>
 </header>
 <main>
   <div class="syncbar" id="syncBar"></div>
