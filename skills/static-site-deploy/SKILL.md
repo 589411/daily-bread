@@ -13,10 +13,25 @@ description: >
 1. **GitHub Pages**：repo → Settings → Pages → Source「Deploy from a branch」→ 選 `main` / `(root)`。
 2. **自訂網域**：在 repo 根目錄放一個 `CNAME` 檔，內容就是網域（例 `sub.example.com`，單獨一行）。push 後 Pages 會認得。
 3. **Cloudflare DNS**：在該網域的 zone 新增 **CNAME**：名稱＝子網域、目標＝`<user>.github.io`，**Proxy 狀態設「DNS only（灰雲）」**。
-4. 等 GitHub Pages 簽好 SSL 後，勾 **Enforce HTTPS**。
+4. 等 GitHub Pages 簽好 SSL 後，勾 **Enforce HTTPS**。**HTTP 已 200、build 是 `built`，但 3–5 分鐘後 HTTPS 還是 `CN=*.github.io`：不要等，直接照下面「憑證要踢一下」處理。**
 5. 網站若用 `fetch()` 讀本地 JSON，**必須用伺服器或 Pages 開啟，不能 `file://`**（CORS 會擋）。
 
 ## 踩過的坑
+
+- **⭐ 憑證要踢一下（最常卡的一關，已經犯錯兩次）**
+  - **症狀**：DNS 正確、HTTP 回 200、build 是 `built`，可是 HTTPS 拿到的是 `CN=*.github.io`；執行 `PUT pages -F https_enforced=true` 回 404 `The certificate does not exist yet`。
+  - **唯一有效的解法**：清空 cname 再設回去，GitHub 會重新申請憑證，通常 1 分鐘內簽好：
+    ```
+    gh api -X PUT repos/<owner>/<repo>/pages -f cname="" && sleep 15 && \
+    gh api -X PUT repos/<owner>/<repo>/pages -f cname="sub.example.com"
+    # 輪詢直到 curl https 不報憑證錯，再：
+    gh api -X PUT repos/<owner>/<repo>/pages -F https_enforced=true
+    curl -sI https://sub.example.com/   # 應 200；http 應 301 到 https
+    ```
+  - **以下做法都沒用，不要做**：乾等（2026-11-02 animate 子網域等了一整晚）、只重送同一個 cname 值、在 UI 重設後又乾等、把 health 檢查全是 null 當成「GitHub 在排隊」。
+  - **唯一的例外**：build 本身是 `errored`（0 秒、`Page build failed`）時，先跑 `gh api -X POST repos/<owner>/<repo>/pages/builds` 讓 build 回到 `built`，再踢憑證。
+  - **權限**：Claude Code 的 auto mode 會擋清空 cname 這一步（屬於 DNS／憑證變更）。直接給 Joseph 一行 `! gh api ...` 讓他自己跑，不要繞過。
+  - **副作用**：GitHub 會自動在遠端 commit `Delete CNAME` 和 `Create CNAME`，本機要 `git pull --rebase`。過渡期間出現一次 `errored` 的 build 是正常的。
 
 - **灰雲很重要**：CNAME 若開 Cloudflare 代理（橘雲），會與 GitHub 的 SSL 憑證打架。先用 DNS only，讓 GitHub 自己簽憑證；要 CDN 之後再說。
 - **push 被拒「fetch first / 遠端有你沒有的提交」**：常是你在 Pages UI 設自訂網域時，**GitHub 自動 commit 了一個 CNAME 到遠端**，與你本機新建的 CNAME 衝突。解法：
